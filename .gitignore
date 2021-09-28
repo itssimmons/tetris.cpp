@@ -1,0 +1,77 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# logs
+*.log
+*.out
+*.err
+*.pid
+
+# C/C++ objects and binaries
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# deps
+*.d
+
+# debug / profiling
+*.gcda
+*.gcno
+*.gcov
+*.profraw
+*.profdata
+*.dSYM/
+
+# build dirs
+build/
+Build/
+bin/
+dist/
+out/
+debug/
+release/
+cmake-build-*/
+
+# cmake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# xcode
+DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
+*.pbxuser
+.build/
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# archives
+*.zip
+*.tar
+*.gz
+*.tgz
+*.rar
+
+# game runtime files
+save/
+saves/
+scores/
+*.sav
+*.score
