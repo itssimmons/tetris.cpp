@@ -150,18 +150,23 @@ Axis y = {0, 1};
 
 Key key;
 
+int baseline = y.end;
+
+double gravityTimer = 0.0;
+double gravityInterval = 0.8;
+
 void handleKey(Key &key)
 {
     switch (key) {
         case Key::LEFT:
             if (x.begin <= 0) break;
-            x.begin = x.begin - 1;
-            x.end = x.end - 1;
+            x.begin--;
+            x.end--;
             break;
         case Key::RIGHT:
             if (x.end >= BOARD_WIDTH - 1) break;
-            x.begin = x.begin + 1;
-            x.end = x.end + 1;
+            x.begin++;
+            x.end++;
             break;
         default:
             break;
@@ -174,6 +179,14 @@ void update(double dt)
         running = false;
     
     handleKey(key);
+    
+    gravityTimer += dt;
+    while (gravityTimer >= gravityInterval) {
+        if (y.end >= BOARD_HEIGHT-1) break;
+        y.begin++;
+        y.end++;
+        gravityTimer -= gravityInterval;
+    }
 }
 
 void render()
@@ -189,9 +202,9 @@ void render()
             if (r >= y.begin && r <= y.end &&
                 c>= x.begin && c <= x.end
             ) {
-                int localY = r - y.begin;
-                int localX = c - x.begin;
-                cell = L[localY][localX];
+                int yAxis = r - y.begin;
+                int xAxis = c - x.begin;
+                cell = L[yAxis][xAxis];
             }
 
             std::cout << cell;
