@@ -150,8 +150,6 @@ Axis y = {0, 1};
 
 Key key;
 
-int baseline = y.end;
-
 double gravityTimer = 0.0;
 double gravityInterval = 0.8;
 
@@ -167,6 +165,11 @@ void handleKey(Key &key)
             if (x.end >= BOARD_WIDTH - 1) break;
             x.begin++;
             x.end++;
+            break;
+        case Key::SPACEBAR:
+            // for now, then it'll need to detect the latest frozen piece
+            y.begin = BOARD_HEIGHT - 2;
+            y.end = BOARD_HEIGHT - 1;
             break;
         default:
             break;
@@ -195,7 +198,8 @@ void render()
     
     std::cout << "\n\n";
     for (int r = 0; r < BOARD_HEIGHT; ++r) {
-        std::cout << "│";
+        if (r == 0 || r == 1) std::cout << " ";
+        else std::cout << "│";
         for (int c = 0; c < BOARD_WIDTH; ++c) {
             std::string cell = board[r][c];
             
@@ -209,7 +213,8 @@ void render()
 
             std::cout << cell;
         }
-        std::cout << "│\n";
+        if (r == 0 || r == 1) std::cout << "\n";
+        else std::cout << "│\n";
     }
     std::cout << "╰——————————╯" << '\n';
 }
