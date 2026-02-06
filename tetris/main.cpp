@@ -7,14 +7,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <unordered_map>
 
 using clock_type = std::chrono::steady_clock;
 using seconds_f  = std::chrono::duration<float>;
-
-// Tetris Rules
-// 2 Hidden Rows
-// Table Size 10x20
-// Gravity 0.02
 
 inline void clear()
 {
@@ -63,7 +59,7 @@ void setNonBlocking()
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 }
 
-enum Key { NONE = -1, UP, DOWN, RIGHT, LEFT, SPACEBAR, ESC, C };
+enum Key { NONE = -1, UP, DOWN, RIGHT, LEFT, SPACEBAR, ESC, Z_KEY, X_KEY, C_KEY };
 
 bool readKey(Key& outKey)
 {
@@ -91,7 +87,9 @@ bool readKey(Key& outKey)
     }
 
     if (c == ' ') outKey = SPACEBAR;
-    else if (c == 'c' || c == 'C') outKey = C;
+    else if (c == 'c' || c == 'C') outKey = C_KEY;
+    else if (c == 'z' || c == 'Z') outKey = Z_KEY;
+    else if (c == 'x' || c == 'X') outKey = X_KEY;
 
     return true;
 }
@@ -99,9 +97,10 @@ bool readKey(Key& outKey)
 
 // T, S, Z, L, J, O, I
 
-const std::array<std::array<std::string, 3>, 2> L{{
+const std::array<std::array<std::string, 3>, 3> ShapeL{{
     { " ", " ", "■" },
     { "■", "■", "■" },
+    { " ", " ", " " },
 }};
 
 struct Axis {
@@ -109,7 +108,7 @@ struct Axis {
     int end;
 };
 
-constexpr short TARGET_FPS   = 60;
+constexpr short TARGET_FPS   = 30;
 constexpr auto  FRAME_TIME   = std::chrono::duration<double>(1.0 / TARGET_FPS);
 constexpr short BOARD_WIDTH  = 10;
 constexpr short BOARD_HEIGHT = 22; // 20 + 2 (2 hidden rows)
@@ -143,15 +142,43 @@ std::array<std::array<std::string, BOARD_WIDTH>, BOARD_HEIGHT> board{{
 bool running = true;
 auto previous = clock_type::now();
 
-const short x1 = std::floor(( BOARD_WIDTH - 1 ) / 2) - std::floor(( L[0].size() - 1 ) / 2);
-const short x2 = x1 + L[0].size() - 1;
+const short x1 = std::floor(( BOARD_WIDTH - 1 ) / 2) - std::floor(( ShapeL[0].size() - 1 ) / 2);
+const short x2 = x1 + ShapeL[0].size() - 1;
 Axis x = {x1, x2};
 Axis y = {0, 1};
 
 Key key;
 
-double gravityTimer = 0.0;
-double gravityInterval = 0.8;
+double gravityInterval = 0.7;
+double gravityFactor   = 0.3;
+double gravityTimer    = 0.0;
+
+short currentRotation = 0;
+
+enum Shape {
+    L = 0,
+    T,
+    J,
+    S,
+    Z,
+    O,
+    I
+};
+
+// for T, L, J, S, Z
+
+using array_of_coords = std::array<std::array<std::array<short, 2>, 4>, 4>;
+const std::unordered_map<Shape, array_of_coords> rotations{
+    {
+        Shape::L,
+        {{
+            {{ {-1, 0}, {0, 0}, {1,  0}, {1,   1} }},
+            {{ {0,  1}, {0, 0}, {0, -1}, {1,  -1} }},
+            {{ {1,  0}, {0, 0}, {-1, 0}, {-1, -1} }},
+            {{ {0, -1}, {0, 0}, {0,  1}, {1,  -1} }}
+        }}
+    }
+};
 
 void handleKey(Key &key)
 {
@@ -171,7 +198,18 @@ void handleKey(Key &key)
             y.begin = BOARD_HEIGHT - 2;
             y.end = BOARD_HEIGHT - 1;
             break;
+        case Key::X_KEY:
+        case Key::UP:
+            // clockwise rotation
+            break;
+        case Key::Z_KEY:
+            // counter-clockwise rotation
+            break;
+        case Key::DOWN:
+            gravityFactor = 0.3;
+            break;
         default:
+            gravityFactor = 1.0;
             break;
     }
 }
@@ -183,12 +221,16 @@ void update(double dt)
     
     handleKey(key);
     
+    double currentInterval = gravityInterval * gravityFactor;
+
     gravityTimer += dt;
-    while (gravityTimer >= gravityInterval) {
-        if (y.end >= BOARD_HEIGHT-1) break;
+
+    while (gravityTimer >= currentInterval) {
+        if (y.end >= BOARD_HEIGHT - 1) break;
+    
         y.begin++;
         y.end++;
-        gravityTimer -= gravityInterval;
+        gravityTimer -= currentInterval;
     }
 }
 
@@ -208,7 +250,7 @@ void render()
             ) {
                 int yAxis = r - y.begin;
                 int xAxis = c - x.begin;
-                cell = L[yAxis][xAxis];
+                cell = ShapeL[yAxis][xAxis];
             }
 
             std::cout << cell;
