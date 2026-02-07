@@ -1,0 +1,19 @@
+[
+	{
+		"label": "Xcode: Build",
+		"shell": "system",
+		"hide": "on_success",
+		"command": "xcodebuild",
+		"args": [
+			"-project",
+			"tetris.xcodeproj",
+			"-scheme",
+			"tetris",
+			"-configuration",
+			"Debug",
+			"-derivedDataPath",
+			"./build",
+			"build",
+		],
+	},
+]
