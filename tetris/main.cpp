@@ -245,6 +245,35 @@ void recalculateBaseline()
     }
 }
 
+void clearLines()
+{
+    for (short row = BOARD_HEIGHT - 1; row >= 0; --row)
+    {
+        bool fullLine = true;
+        for (short col = 0; col < BOARD_WIDTH; ++col)
+        {
+            if (board[row][col] == " ")
+            {
+                fullLine = false;
+                break;
+            }
+        }
+
+        if (fullLine)
+        {
+            // Move all rows above down by one
+            for (short r = row; r > 0; --r)
+            {
+                board[r] = board[r - 1];
+            }
+            // Clear the top row
+            board[0] = {" ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
+            // Check the same row again since it now contains the above row
+            row++;
+        }
+    }
+}
+
 void spawnNewPiece()
 {
     currentShape = {{
@@ -416,6 +445,7 @@ void update(double delta)
 
     recalculateBaseline();
     lockPiece();
+    clearLines();
 }
 
 void render()
@@ -441,8 +471,11 @@ void render()
                 if (currentShape[yAxis][xAxis] == "■") cell = "■";
             }
 
-            for (const auto& coord : baseline)
-                if (coord.x == col && coord.y == row) cell = "x";
+            // this is just for debugging the baseline, it should be removed
+            // later
+
+            // for (const auto& coord : baseline)
+            //     if (coord.x == col && coord.y == row) cell = "x";
 
             std::cout << cell;
         }
