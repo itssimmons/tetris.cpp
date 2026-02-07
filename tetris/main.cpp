@@ -6,7 +6,6 @@
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <unordered_map>
 
 using clock_type = std::chrono::steady_clock;
@@ -43,13 +42,13 @@ void enableRawMode()
 {
     tcgetattr(STDIN_FILENO, &orig_termios);
     atexit(disableRawMode);
-    
+
     termios raw = orig_termios;
-    
+
     raw.c_lflag &= ~(ECHO | ICANON | ISIG); // local modes
     raw.c_iflag &= ~(IXON | ICRNL);         // input modes
 //    raw.c_oflag &= ~(OPOST);                // output modes
-    
+
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
@@ -59,23 +58,35 @@ void setNonBlocking()
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 }
 
-enum Key { NONE = -1, UP, DOWN, RIGHT, LEFT, SPACEBAR, ESC, Z_KEY, X_KEY, C_KEY };
+enum Key : std::int8_t {
+    NONE = -1,
+    UP,
+    DOWN,
+    RIGHT,
+    LEFT,
+    SPACEBAR,
+    ESC,
+    Z_KEY,
+    X_KEY,
+    C_KEY
+};
 
-bool readKey(Key& outKey)
+auto readKey(Key& outKey) -> bool
 {
     outKey = Key::NONE;
 
-    char c;
-    if (read(STDIN_FILENO, &c, 1) != 1)
+    char input;
+    if (read(STDIN_FILENO, &input, 1) != 1) {
         return true;
+    }
 
-    if (c == '\x1B') {
-        char seq[2];
+    if (input == '\x1B') {
+        std::array<char, 2> seq;
 
-        if (read(STDIN_FILENO, &seq[0], 1) != 1) return false;
-        if (seq[0] != '[') return false;
+        if (read(STDIN_FILENO, seq.data(), 1) != 1) { return false; }
+        if (seq[0] != '[') { return false; }
 
-        if (read(STDIN_FILENO, &seq[1], 1) != 1) return false;
+        if (read(STDIN_FILENO, &seq[1], 1) != 1) { return false; }
 
         switch (seq[1]) {
             case 'A': outKey = UP;    return true;
@@ -86,10 +97,10 @@ bool readKey(Key& outKey)
         }
     }
 
-    if (c == ' ') outKey = SPACEBAR;
-    else if (c == 'c' || c == 'C') outKey = C_KEY;
-    else if (c == 'z' || c == 'Z') outKey = Z_KEY;
-    else if (c == 'x' || c == 'X') outKey = X_KEY;
+    if (input == ' ') { outKey = SPACEBAR; }
+    else if (input == 'c' || input == 'C') { outKey = C_KEY; }
+    else if (input == 'z' || input == 'Z') { outKey = Z_KEY; }
+    else if (input == 'x' || input == 'X') { outKey = X_KEY; }
 
     return true;
 }
@@ -116,7 +127,7 @@ constexpr short BOARD_HEIGHT = 22; // 20 + 2 (2 hidden rows)
 std::array<std::array<std::string, BOARD_WIDTH>, BOARD_HEIGHT> board{{
     {" "," "," "," "," "," "," "," "," "," "},
     {" "," "," "," "," "," "," "," "," "," "}, // hidden rows
-    
+
     {" "," "," "," "," "," "," "," "," "," "},
     {" "," "," "," "," "," "," "," "," "," "},
     {" "," "," "," "," "," "," "," "," "," "},
@@ -142,20 +153,27 @@ std::array<std::array<std::string, BOARD_WIDTH>, BOARD_HEIGHT> board{{
 bool running = true;
 auto previous = clock_type::now();
 
-const short x1 = std::floor(( BOARD_WIDTH - 1 ) / 2) - std::floor(( ShapeL[0].size() - 1 ) / 2);
-const short x2 = x1 + ShapeL[0].size() - 1;
-Axis x = {x1, x2};
-Axis y = {0, 1};
+const short xBegin = static_cast<short>(
+    std::floor( ( BOARD_WIDTH - 1.0 ) / 2.0) -
+    std::floor( ( ShapeL[0].size() - 1.0 ) / 2.0 )
+);
+const short xEnd = static_cast<short>(xBegin + ShapeL[0].size() - 1);
+Axis xAxis = {xBegin, xEnd};
+Axis yAxis = {0, 1};
 
 Key key;
 
-double gravityInterval = 0.7;
-double gravityFactor   = 0.3;
+constexpr const double INITIAL_GRAVITY_INTERVAL = 0.7; // seconds
+constexpr const double INITIAL_GRAVITY_FACTOR   = 1.0; // seconds
+constexpr const double BASE_SOFT_DROP_GRAVITY_FACTOR   = 0.3; // seconds
+
+double gravityInterval = INITIAL_GRAVITY_INTERVAL;
+double gravityFactor   = INITIAL_GRAVITY_FACTOR;
 double gravityTimer    = 0.0;
 
 short currentRotation = 0;
 
-enum Shape {
+enum Shape : std::uint8_t {
     L = 0,
     T,
     J,
@@ -182,21 +200,25 @@ const std::unordered_map<Shape, array_of_coords> rotations{
 
 void handleKey(Key &key)
 {
-    switch (key) {
+    switch (key)
+    {
         case Key::LEFT:
-            if (x.begin <= 0) break;
-            x.begin--;
-            x.end--;
+            if (xAxis.begin <= 0) { break; }
+            xAxis.begin--;
+            xAxis.end--;
             break;
         case Key::RIGHT:
-            if (x.end >= BOARD_WIDTH - 1) break;
-            x.begin++;
-            x.end++;
+            if (xAxis.end >= BOARD_WIDTH - 1) { break; }
+            xAxis.begin++;
+            xAxis.end++;
             break;
         case Key::SPACEBAR:
-            // for now, then it'll need to detect the latest frozen piece
-            y.begin = BOARD_HEIGHT - 2;
-            y.end = BOARD_HEIGHT - 1;
+            // hard drop
+            yAxis.begin = BOARD_HEIGHT - 2;
+            yAxis.end = BOARD_HEIGHT - 1;
+            break;
+        case Key::C_KEY:
+            // hold
             break;
         case Key::X_KEY:
         case Key::UP:
@@ -206,30 +228,33 @@ void handleKey(Key &key)
             // counter-clockwise rotation
             break;
         case Key::DOWN:
-            gravityFactor = 0.3;
+            // soft drop
+            gravityFactor = BASE_SOFT_DROP_GRAVITY_FACTOR;
             break;
         default:
-            gravityFactor = 1.0;
+            // reset states
+            gravityFactor = INITIAL_GRAVITY_FACTOR;
             break;
     }
 }
 
-void update(double dt)
+void update(double delta)
 {
-    if (!readKey(key))
+    if (!readKey(key)) {
         running = false;
-    
+    }
+
     handleKey(key);
-    
+
     double currentInterval = gravityInterval * gravityFactor;
 
-    gravityTimer += dt;
+    gravityTimer += delta;
 
     while (gravityTimer >= currentInterval) {
-        if (y.end >= BOARD_HEIGHT - 1) break;
-    
-        y.begin++;
-        y.end++;
+        if (yAxis.end >= BOARD_HEIGHT - 1) break;
+
+        yAxis.begin++;
+        yAxis.end++;
         gravityTimer -= currentInterval;
     }
 }
@@ -237,26 +262,32 @@ void update(double dt)
 void render()
 {
     homeCursor();
-    
+
     std::cout << "\n\n";
-    for (int r = 0; r < BOARD_HEIGHT; ++r) {
-        if (r == 0 || r == 1) std::cout << " ";
-        else std::cout << "│";
-        for (int c = 0; c < BOARD_WIDTH; ++c) {
-            std::string cell = board[r][c];
-            
-            if (r >= y.begin && r <= y.end &&
-                c>= x.begin && c <= x.end
+    for (int row = 0; row < BOARD_HEIGHT; ++row) {
+        if (row == 0 || row == 1) {
+            std::cout << " ";
+        } else {
+            std::cout << "│";
+        }
+        for (int col = 0; col < BOARD_WIDTH; ++col) {
+            std::string cell = board[row][col];
+
+            if (row   >= yAxis.begin && row   <= yAxis.end &&
+                col >= xAxis.begin && col <= xAxis.end
             ) {
-                int yAxis = r - y.begin;
-                int xAxis = c - x.begin;
+                int yAxis = row - yAxis.begin;
+                int xAxis = col - xAxis.begin;
                 cell = ShapeL[yAxis][xAxis];
             }
 
             std::cout << cell;
         }
-        if (r == 0 || r == 1) std::cout << "\n";
-        else std::cout << "│\n";
+        if (row == 0 || row == 1) {
+            std::cout << "\n";
+        } else {
+            std::cout << "│\n";
+        }
     }
     std::cout << "╰——————————╯" << '\n';
 }
@@ -264,30 +295,31 @@ void render()
 auto main(int argc, const char * argv[]) -> int
 {
     std::cout.setf(std::ios::unitbuf);
-    
+
     hideCursor();
     enableRawMode();
     setNonBlocking();
-    
+
     clear();
 
     while (running) {
         auto frame_start = clock_type::now();
-        
+
         seconds_f delta = frame_start - previous;
         previous = frame_start;
-        
+
         update(delta.count());
         render();
-        
+
         auto frame_end = clock_type::now();
         auto work_time = frame_end - frame_start;
-        
-        if (work_time < FRAME_TIME)
+
+        if (work_time < FRAME_TIME) {
             std::this_thread::sleep_for(FRAME_TIME - work_time);
+        }
     }
-    
+
     restoreCursor();
-    
+
     return 0;
 }

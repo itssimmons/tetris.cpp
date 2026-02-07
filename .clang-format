@@ -1,12 +1,11 @@
 BasedOnStyle: None
-AlignTrailingComments: true
 BreakBeforeBraces: Allman
-ColumnLimit: 0
 IndentWidth: 4
-KeepEmptyLinesAtTheStartOfBlocks: false
+UseTab: Never
+ColumnLimit: 0
+AllowShortFunctionsOnASingleLine: None
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
 PointerBindsToType: false
 SpacesBeforeTrailingComments: 1
-TabWidth: 8
-UseTab: Never
+TabWidth: 4
