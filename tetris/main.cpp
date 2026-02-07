@@ -141,7 +141,7 @@ auto readKey(Key& outKey) -> bool
 
 // T, S, Z, L, J, O, I
 
-Coords baseline = {0, 0};
+std::vector<Coords> baseline;
 
 std::array<std::array<std::string, 3>, 3> currentShape{{
     {" ", " ", "■"},
@@ -213,50 +213,43 @@ const std::unordered_map<Shape, array_of_coords> rotations{
  * Recalculates the baseline position based on the current shape and the board
  * state.
  *
- * The baseline is a coodinate (x,y) in relation to the board and the current
- * shape. It represents the lowest point of the current shape + the distance to
- * the nearest occupied cell on the board below it.
+ * The baseline is a set of coodinates [(x,y), ...] in relation to the board and
+ * the current shape. It represents the lowest point of the current shape + the
+ * distance to the nearest occupied cell on the board below it.
  *
  * It is used to determine when the shape should lock into place on the board.
+ *
  */
 void recalculateBaseline()
 {
-    bool found = false;
+    bool done = false;
     for (short row = y.end; row >= y.begin; --row)
     {
         for (short col = x.begin; col <= x.end; ++col)
         {
             if (currentShape[row - y.begin][col - x.begin] == "■")
             {
-                baseline.y = row + 1;
-                baseline.x = col;
-                found      = true;
-                break;
+                short r = row + 1;
+                baseline.push_back({col, r});
+                if (col >= x.end) done = true;
             }
         }
-        if (found) break;
+        if (done) break;
     }
 
-    for (short row = 0; row < BOARD_HEIGHT; ++row)
+    for (auto& coord : baseline)
     {
-        auto& cell = board[row][baseline.x];
-
-        if (cell == "■")
-        {
-            baseline.y = row - 1;
-            return;
-        }
+        while (coord.y < BOARD_HEIGHT && board[coord.y][coord.x] == " ")
+            coord.y++;
+        coord.y--; // step back to the last empty cell
     }
-
-    // No block found, set the bottom of the board as the baseline
-    baseline.y = BOARD_HEIGHT - 1;
 }
 
 void spawnNewPiece()
 {
     currentShape = {{
         {" ", " ", "■"},
-        {"■", "■", "■"}, // < baseline
+        {"■", "■", "■"},
         {" ", " ", " "},
     }};
 
@@ -272,9 +265,35 @@ void spawnNewPiece()
 
 void lockPiece()
 {
-    if (y.end >= baseline.y)
+    if (baseline.empty()) return;
+
+    // Check if any baseline coordinate matches the current piece position
+    bool shouldLock = false;
+    for (const auto& coords : baseline)
     {
-        for (short row = y.begin; row <= y.end; ++row)
+        for (short row = y.end; row >= y.begin; --row)
+        {
+            for (short col = x.begin; col <= x.end; ++col)
+            {
+                if (currentShape[row - y.begin][col - x.begin] == "■")
+                {
+                    if (coords.x == col && coords.y == row)
+                    {
+                        shouldLock = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldLock) break;
+        }
+        if (shouldLock) break;
+    }
+
+    // If collision detected, lock the piece and spawn new one
+    if (shouldLock)
+    {
+        for (short row = y.end; row >= y.begin; --row)
+        {
             for (short col = x.begin; col <= x.end; ++col)
             {
                 if (currentShape[row - y.begin][col - x.begin] == "■")
@@ -282,7 +301,9 @@ void lockPiece()
                     board[row][col] = "■";
                 }
             }
+        }
 
+        baseline.clear();
         spawnNewPiece();
     }
 }
@@ -292,19 +313,17 @@ void handleKey(Key& key)
     switch (key)
     {
         case Key::LEFT:
-            if (baseline.x <= 0) break;
             x.begin--;
             x.end--;
             break;
         case Key::RIGHT:
-            if (baseline.x >= BOARD_WIDTH - 1) break;
             x.begin++;
             x.end++;
             break;
         case Key::SPACEBAR:
             // hard drop
-            y.begin = baseline.y - (y.end - y.begin);
-            y.end   = baseline.y;
+            // y.begin = baseline.y - (y.end - y.begin);
+            // y.end   = baseline.y;
             break;
         case Key::C_KEY:
             // hold
@@ -388,7 +407,7 @@ void update(double delta)
 
     while (gravityTimer >= currentInterval)
     {
-        if (y.end >= baseline.y) break;
+        // if (y.end >= baseline.y) break;
 
         y.begin++;
         y.end++;
@@ -422,7 +441,8 @@ void render()
                 if (currentShape[yAxis][xAxis] == "■") cell = "■";
             }
 
-            if (row == baseline.y && col == baseline.x) cell = "x";
+            for (const auto& coord : baseline)
+                if (coord.x == col && coord.y == row) cell = "x";
 
             std::cout << cell;
         }
