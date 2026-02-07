@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
 #include <iostream>
@@ -10,6 +11,29 @@
 
 using clock_type = std::chrono::steady_clock;
 using seconds_f  = std::chrono::duration<float>;
+
+struct Axis
+{
+    short begin;
+    short end;
+};
+
+struct Coords
+{
+    short x;
+    short y;
+};
+
+enum Shape : std::uint8_t
+{
+    L = 0,
+    T,
+    J,
+    S,
+    Z,
+    O,
+    I
+};
 
 inline void clear()
 {
@@ -117,17 +141,13 @@ auto readKey(Key& outKey) -> bool
 
 // T, S, Z, L, J, O, I
 
+Coords baseline = {0, 0};
+
 std::array<std::array<std::string, 3>, 3> currentShape{{
     {" ", " ", "■"},
     {"■", "■", "■"},
     {" ", " ", " "},
 }};
-
-struct Axis
-{
-    int begin;
-    int end;
-};
 
 constexpr short TARGET_FPS   = 30;
 constexpr auto FRAME_TIME    = std::chrono::duration<double>(1.0 / TARGET_FPS);
@@ -181,19 +201,6 @@ double gravityTimer    = 0.0;
 
 short currentRotation = 0;
 
-enum Shape : std::uint8_t
-{
-    L = 0,
-    T,
-    J,
-    S,
-    Z,
-    O,
-    I
-};
-
-// for T, L, J, S, Z
-
 using array_of_coords = std::array<std::array<std::array<short, 2>, 4>, 4>;
 const std::unordered_map<Shape, array_of_coords> rotations{
     {Shape::L,
@@ -202,24 +209,102 @@ const std::unordered_map<Shape, array_of_coords> rotations{
        {{{1, 0}, {0, 0}, {-1, 0}, {-1, -1}}},
        {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}}};
 
+/**
+ * Recalculates the baseline position based on the current shape and the board
+ * state.
+ *
+ * The baseline is a coodinate (x,y) in relation to the board and the current
+ * shape. It represents the lowest point of the current shape + the distance to
+ * the nearest occupied cell on the board below it.
+ *
+ * It is used to determine when the shape should lock into place on the board.
+ */
+void recalculateBaseline()
+{
+    bool found = false;
+    for (short row = y.end; row >= y.begin; --row)
+    {
+        for (short col = x.begin; col <= x.end; ++col)
+        {
+            if (currentShape[row - y.begin][col - x.begin] == "■")
+            {
+                baseline.y = row + 1;
+                baseline.x = col;
+                found      = true;
+                break;
+            }
+        }
+        if (found) break;
+    }
+
+    for (short row = 0; row < BOARD_HEIGHT; ++row)
+    {
+        auto& cell = board[row][baseline.x];
+
+        if (cell == "■")
+        {
+            baseline.y = row - 1;
+            return;
+        }
+    }
+
+    // No block found, set the bottom of the board as the baseline
+    baseline.y = BOARD_HEIGHT - 1;
+}
+
+void spawnNewPiece()
+{
+    currentShape = {{
+        {" ", " ", "■"},
+        {"■", "■", "■"}, // < baseline
+        {" ", " ", " "},
+    }};
+
+    x.begin =
+        static_cast<short>(std::floor((BOARD_WIDTH - 1.0) / 2.0) -
+                           std::floor((currentShape[0].size() - 1.0) / 2.0));
+    x.end   = static_cast<short>(x.begin + currentShape[0].size() - 1);
+    y.begin = 0;
+    y.end   = static_cast<short>(y.begin + currentShape.size() - 1);
+
+    currentRotation = 0;
+}
+
+void lockPiece()
+{
+    if (y.end >= baseline.y)
+    {
+        for (short row = y.begin; row <= y.end; ++row)
+            for (short col = x.begin; col <= x.end; ++col)
+            {
+                if (currentShape[row - y.begin][col - x.begin] == "■")
+                {
+                    board[row][col] = "■";
+                }
+            }
+
+        spawnNewPiece();
+    }
+}
+
 void handleKey(Key& key)
 {
     switch (key)
     {
         case Key::LEFT:
-            if (x.begin <= 0) break;
+            if (baseline.x <= 0) break;
             x.begin--;
             x.end--;
             break;
         case Key::RIGHT:
-            if (x.end >= BOARD_WIDTH - 1) break;
+            if (baseline.x >= BOARD_WIDTH - 1) break;
             x.begin++;
             x.end++;
             break;
         case Key::SPACEBAR:
             // hard drop
-            y.begin = BOARD_HEIGHT - 2;
-            y.end   = BOARD_HEIGHT - 1;
+            y.begin = baseline.y - (y.end - y.begin);
+            y.end   = baseline.y;
             break;
         case Key::C_KEY:
             // hold
@@ -303,12 +388,15 @@ void update(double delta)
 
     while (gravityTimer >= currentInterval)
     {
-        if (y.end >= BOARD_HEIGHT - 1) break;
+        if (y.end >= baseline.y) break;
 
         y.begin++;
         y.end++;
         gravityTimer -= currentInterval;
     }
+
+    recalculateBaseline();
+    lockPiece();
 }
 
 void render()
@@ -331,8 +419,10 @@ void render()
             {
                 int yAxis = row - y.begin;
                 int xAxis = col - x.begin;
-                cell      = currentShape[yAxis][xAxis];
+                if (currentShape[yAxis][xAxis] == "■") cell = "■";
             }
+
+            if (row == baseline.y && col == baseline.x) cell = "x";
 
             std::cout << cell;
         }
