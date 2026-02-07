@@ -117,7 +117,7 @@ auto readKey(Key& outKey) -> bool
 
 // T, S, Z, L, J, O, I
 
-const std::array<std::array<std::string, 3>, 3> ShapeL{{
+std::array<std::array<std::string, 3>, 3> currentShape{{
     {" ", " ", "■"},
     {"■", "■", "■"},
     {" ", " ", " "},
@@ -162,9 +162,10 @@ std::array<std::array<std::string, BOARD_WIDTH>, BOARD_HEIGHT> board{
 bool running  = true;
 auto previous = clock_type::now();
 
-const short x1 = static_cast<short>(std::floor((BOARD_WIDTH - 1.0) / 2.0) -
-                                    std::floor((ShapeL[0].size() - 1.0) / 2.0));
-const short x2 = static_cast<short>(x1 + ShapeL[0].size() - 1);
+const short x1 =
+    static_cast<short>(std::floor((BOARD_WIDTH - 1.0) / 2.0) -
+                       std::floor((currentShape[0].size() - 1.0) / 2.0));
+const short x2 = static_cast<short>(x1 + currentShape[0].size() - 1);
 Axis x         = {x1, x2};
 Axis y         = {0, 1};
 
@@ -199,7 +200,7 @@ const std::unordered_map<Shape, array_of_coords> rotations{
      {{{{{-1, 0}, {0, 0}, {1, 0}, {1, 1}}},
        {{{0, 1}, {0, 0}, {0, -1}, {1, -1}}},
        {{{1, 0}, {0, 0}, {-1, 0}, {-1, -1}}},
-       {{{0, -1}, {0, 0}, {0, 1}, {1, -1}}}}}}};
+       {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}}};
 
 void handleKey(Key& key)
 {
@@ -225,11 +226,61 @@ void handleKey(Key& key)
             break;
         case Key::X_KEY:
         case Key::UP:
+        {
+            currentRotation = (currentRotation + 1) % 4;
             // clockwise rotation
+            auto& pieceRotations        = rotations.at(Shape::L);
+            auto& currentRotationCoords = pieceRotations[currentRotation];
+
+            std::array<std::array<std::string, 3>, 3> grid{{
+                {" ", " ", " "},
+                {" ", " ", " "},
+                {" ", " ", " "},
+            }};
+
+            for (const auto& [x, y] : currentRotationCoords)
+            {
+                int row        = 1 - y; // invert y-axis for correct rotation
+                int col        = x + 1; // shift x-axis to fit in 3x3 grid
+                grid[row][col] = "■";
+            }
+
+            currentShape = grid;
+            x            = {x.begin,
+                            static_cast<short>(x.begin + currentShape[0].size() - 1)};
+            y            = {y.begin,
+                            static_cast<short>(y.begin + currentShape.size() - 1)};
+
             break;
+        }
         case Key::Z_KEY:
-            // counter-clockwise rotation
+        {
+            currentRotation = (currentRotation - 1 + 4) % 4;
+            // clockwise rotation
+            auto& pieceRotations        = rotations.at(Shape::L);
+            auto& currentRotationCoords = pieceRotations[currentRotation];
+
+            std::array<std::array<std::string, 3>, 3> grid{{
+                {" ", " ", " "},
+                {" ", " ", " "},
+                {" ", " ", " "},
+            }};
+
+            for (const auto& [x, y] : currentRotationCoords)
+            {
+                int row        = 1 - y; // invert y-axis for correct rotation
+                int col        = x + 1; // shift x-axis to fit in 3x3 grid
+                grid[row][col] = "■";
+            }
+
+            currentShape = grid;
+            x            = {x.begin,
+                            static_cast<short>(x.begin + currentShape[0].size() - 1)};
+            y            = {y.begin,
+                            static_cast<short>(y.begin + currentShape.size() - 1)};
+
             break;
+        }
         case Key::DOWN:
             // soft drop
             gravityFactor = BASE_SOFT_DROP_GRAVITY_FACTOR;
@@ -278,9 +329,9 @@ void render()
             if (row >= y.begin && row <= y.end && col >= x.begin &&
                 col <= x.end)
             {
-                int yAxis = row - ::y.begin;
-                int xAxis = col - ::x.begin;
-                cell      = ShapeL[yAxis][xAxis];
+                int yAxis = row - y.begin;
+                int xAxis = col - x.begin;
+                cell      = currentShape[yAxis][xAxis];
             }
 
             std::cout << cell;
