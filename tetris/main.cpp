@@ -357,6 +357,18 @@ void wallKick()
     }
 }
 
+void gameOver()
+{
+    for (short col = 0; col < BOARD_WIDTH; ++col)
+    {
+        if (board[0][col] == "■")
+        {
+            running = false;
+            break;
+        }
+    }
+}
+
 void handleKey(Key& key)
 {
     switch (key)
@@ -474,6 +486,7 @@ void update(double delta)
     recalculateBaseline();
     lockPiece();
     clearLines();
+    gameOver();
 }
 
 void render()
