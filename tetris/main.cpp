@@ -343,6 +343,20 @@ void lockPiece()
     }
 }
 
+void wallKick()
+{
+    if (x.begin < 0)
+    {
+        x.begin++;
+        x.end++;
+    }
+    else if (x.end >= BOARD_WIDTH)
+    {
+        x.begin--;
+        x.end--;
+    }
+}
+
 void handleKey(Key& key)
 {
     switch (key)
@@ -397,6 +411,8 @@ void handleKey(Key& key)
                             static_cast<short>(x.begin + currentShape[0].size() - 1)};
             y            = {y.begin,
                             static_cast<short>(y.begin + currentShape.size() - 1)};
+
+            wallKick();
             break;
         }
         case Key::Z_KEY:
@@ -425,6 +441,7 @@ void handleKey(Key& key)
             y            = {y.begin,
                             static_cast<short>(y.begin + currentShape.size() - 1)};
 
+            wallKick();
             break;
         }
         case Key::DOWN:
@@ -524,7 +541,6 @@ auto main(int argc, const char* argv[]) -> int
     }
 
     restoreCursor();
-    disableRawMode();
 
     logger.stop();
 
