@@ -362,10 +362,17 @@ void handleKey(Key& key)
             x.end++;
             break;
         case Key::SPACEBAR:
+        {
             // hard drop
-            // y.begin = baseline.y - (y.end - y.begin);
-            // y.end   = baseline.y;
+            short highestY = baseline[0].y;
+            for (const auto& coord : baseline)
+            {
+                if (coord.y < highestY) { highestY = coord.y; }
+            }
+            y.end   = highestY;
+            y.begin = static_cast<short>(y.end - currentShape.size() + 1);
             break;
+        }
         case Key::C_KEY:
             // hold
             break;
