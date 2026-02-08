@@ -1,4 +1,3 @@
-#include "debugger.hpp"
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -9,6 +8,10 @@
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
+#include <vector>
+
+#include "debugger.hpp"
+#include "rng.hpp"
 
 using clock_type = std::chrono::steady_clock;
 using seconds_f  = std::chrono::duration<float>;
@@ -140,14 +143,46 @@ auto readKey(Key& outKey) -> bool
     return true;
 }
 
-// T, S, Z, L, J, O, I
-
+// clang-format off
+std::unordered_map<Shape, std::array<std::array<std::string, 4>, 4>> shapes{
+    {Shape::L, {{{" ", " ", "■", " "},
+                {"■", "■", "■", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::T, {{{" ", "■", " ", " "},
+                {"■", "■", "■", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::J, {{{"■", " ", " ", " "},
+                {"■", "■", "■", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::S, {{{" ", "■", "■", " "},
+                {"■", "■", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::Z, {{{"■", "■", " ", " "},
+                {" ", "■", "■", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::O, {{{"■", "■", " ", " "},
+                {"■", "■", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+    {Shape::I, {{{" ", " ", " ", " "},
+                {"■", "■", "■", "■"},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "}}}},
+};
+// clang-format on
 std::vector<Coords> baseline;
 
-std::array<std::array<std::string, 3>, 3> currentShape{{
-    {" ", " ", "■"},
-    {"■", "■", "■"},
-    {" ", " ", " "},
+Shape currentShapeIndex;
+std::array<std::array<std::string, 4>, 4> currentShape{{
+    {" ", " ", " ", " "},
+    {" ", " ", " ", " "},
+    {" ", " ", " ", " "},
+    {" ", " ", " ", " "},
 }};
 
 constexpr short TARGET_FPS   = 30;
@@ -204,7 +239,37 @@ const std::unordered_map<Shape, array_of_coords> rotations{
      {{{{{-1, 0}, {0, 0}, {1, 0}, {1, 1}}},
        {{{0, 1}, {0, 0}, {0, -1}, {1, -1}}},
        {{{1, 0}, {0, 0}, {-1, 0}, {-1, -1}}},
-       {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}}};
+       {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}},
+    {Shape::T,
+     {{{{{-1, 0}, {0, 0}, {1, 0}, {0, 1}}},
+       {{{0, 1}, {0, 0}, {0, -1}, {1, 0}}},
+       {{{1, 0}, {0, 0}, {-1, 0}, {0, -1}}},
+       {{{0, -1}, {0, 0}, {0, 1}, {-1, 0}}}}}},
+    {Shape::J,
+     {{{{{-1, 0}, {0, 0}, {1, 0}, {-1, 1}}},
+       {{{0, 1}, {0, 0}, {0, -1}, {1, 1}}},
+       {{{1, 0}, {0, 0}, {-1, 0}, {1, -1}}},
+       {{{0, -1}, {0, 0}, {0, 1}, {-1, -1}}}}}},
+    {Shape::S,
+     {{{{{-1, 0}, {0, 0}, {0, 1}, {1, 1}}},
+       {{{0, 1}, {0, 0}, {1, 0}, {1, -1}}},
+       {{{1, 0}, {0, 0}, {0, -1}, {-1, -1}}},
+       {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}}}},
+    {Shape::Z,
+     {{{{{-1, 1}, {0, 1}, {0, 0}, {1, 0}}},
+       {{{1, 1}, {1, 0}, {0, 0}, {0, -1}}},
+       {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}},
+       {{{-1, -1}, {-1, 0}, {0, 0}, {0, 1}}}}}},
+    {Shape::O,
+     {{{{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}}}}},
+    {Shape::I,
+     {{{{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
+       {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}},
+       {{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
+       {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}}}}}};
 
 /**
  * Recalculates the baseline position based on the current shape and the board
@@ -282,11 +347,10 @@ void clearLines()
 
 void spawnNewPiece()
 {
-    currentShape = {{
-        {" ", " ", "■"},
-        {"■", "■", "■"},
-        {" ", " ", " "},
-    }};
+    RNG rng;
+    size_t r          = randIndex(rng, shapes.size());
+    currentShapeIndex = static_cast<Shape>(r);
+    currentShape      = shapes.at(currentShapeIndex);
 
     x.begin =
         static_cast<short>(std::floor((BOARD_WIDTH - 1.0) / 2.0) -
@@ -402,13 +466,14 @@ void handleKey(Key& key)
         {
             // clockwise rotation
             currentRotation             = (currentRotation + 1) % 4;
-            auto& pieceRotations        = rotations.at(Shape::L);
+            auto& pieceRotations        = rotations.at(currentShapeIndex);
             auto& currentRotationCoords = pieceRotations[currentRotation];
 
-            std::array<std::array<std::string, 3>, 3> grid{{
-                {" ", " ", " "},
-                {" ", " ", " "},
-                {" ", " ", " "},
+            std::array<std::array<std::string, 4>, 4> grid{{
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
             }};
 
             for (const auto& [x, y] : currentRotationCoords)
@@ -431,13 +496,14 @@ void handleKey(Key& key)
         {
             // counter-clockwise rotation
             currentRotation             = (currentRotation - 1 + 4) % 4;
-            auto& pieceRotations        = rotations.at(Shape::L);
+            auto& pieceRotations        = rotations.at(currentShapeIndex);
             auto& currentRotationCoords = pieceRotations[currentRotation];
 
-            std::array<std::array<std::string, 3>, 3> grid{{
-                {" ", " ", " "},
-                {" ", " ", " "},
-                {" ", " ", " "},
+            std::array<std::array<std::string, 4>, 4> grid{{
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
+                {" ", " ", " ", " "},
             }};
 
             for (const auto& [x, y] : currentRotationCoords)
