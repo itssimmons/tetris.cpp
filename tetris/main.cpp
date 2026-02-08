@@ -95,8 +95,7 @@ enum Key : std::int8_t
     SPACEBAR,
     ESC,
     Z_KEY,
-    X_KEY,
-    C_KEY
+    X_KEY
 };
 
 auto readKey(Key& outKey) -> bool
@@ -135,7 +134,6 @@ auto readKey(Key& outKey) -> bool
     }
 
     if (input == ' ') { outKey = SPACEBAR; }
-    else if (input == 'c' || input == 'C') { outKey = C_KEY; }
     else if (input == 'z' || input == 'Z') { outKey = Z_KEY; }
     else if (input == 'x' || input == 'X') { outKey = X_KEY; }
 
@@ -373,9 +371,6 @@ void handleKey(Key& key)
             y.begin = static_cast<short>(y.end - currentShape.size() + 1);
             break;
         }
-        case Key::C_KEY:
-            // hold
-            break;
         case Key::X_KEY:
         case Key::UP:
         {
