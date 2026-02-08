@@ -374,8 +374,8 @@ void handleKey(Key& key)
         case Key::X_KEY:
         case Key::UP:
         {
-            currentRotation = (currentRotation + 1) % 4;
             // clockwise rotation
+            currentRotation             = (currentRotation + 1) % 4;
             auto& pieceRotations        = rotations.at(Shape::L);
             auto& currentRotationCoords = pieceRotations[currentRotation];
 
@@ -401,8 +401,8 @@ void handleKey(Key& key)
         }
         case Key::Z_KEY:
         {
-            currentRotation = (currentRotation - 1 + 4) % 4;
-            // clockwise rotation
+            // counter-clockwise rotation
+            currentRotation             = (currentRotation - 1 + 4) % 4;
             auto& pieceRotations        = rotations.at(Shape::L);
             auto& currentRotationCoords = pieceRotations[currentRotation];
 
