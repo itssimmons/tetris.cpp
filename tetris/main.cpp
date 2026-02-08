@@ -1,3 +1,4 @@
+#include "debugger.hpp"
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -11,6 +12,8 @@
 
 using clock_type = std::chrono::steady_clock;
 using seconds_f  = std::chrono::duration<float>;
+
+AsyncLogger logger;
 
 struct Axis
 {
@@ -182,12 +185,8 @@ std::array<std::array<std::string, BOARD_WIDTH>, BOARD_HEIGHT> board{
 bool running  = true;
 auto previous = clock_type::now();
 
-const short x1 =
-    static_cast<short>(std::floor((BOARD_WIDTH - 1.0) / 2.0) -
-                       std::floor((currentShape[0].size() - 1.0) / 2.0));
-const short x2 = static_cast<short>(x1 + currentShape[0].size() - 1);
-Axis x         = {x1, x2};
-Axis y         = {0, 1};
+Axis x = {0, 0};
+Axis y = {0, 0};
 
 Key key;
 
@@ -222,6 +221,8 @@ const std::unordered_map<Shape, array_of_coords> rotations{
  */
 void recalculateBaseline()
 {
+    baseline.clear();
+
     bool done = false;
     for (short row = y.end; row >= y.begin; --row)
     {
@@ -242,6 +243,13 @@ void recalculateBaseline()
         while (coord.y < BOARD_HEIGHT && board[coord.y][coord.x] == " ")
             coord.y++;
         coord.y--; // step back to the last empty cell
+    }
+
+    for (int i = 0; i < baseline.size(); ++i)
+    {
+        logger.log("Baseline coord " + std::to_string(i) + ": (" +
+                   std::to_string(baseline[i].x) + ", " +
+                   std::to_string(baseline[i].y) + ")");
     }
 }
 
@@ -342,10 +350,14 @@ void handleKey(Key& key)
     switch (key)
     {
         case Key::LEFT:
+            if (baseline.empty() || baseline[0].x <= 0) break;
             x.begin--;
             x.end--;
             break;
         case Key::RIGHT:
+            if (baseline.empty() ||
+                baseline[baseline.size() - 1].x >= BOARD_WIDTH - 1)
+                break;
             x.begin++;
             x.end++;
             break;
@@ -383,7 +395,6 @@ void handleKey(Key& key)
                             static_cast<short>(x.begin + currentShape[0].size() - 1)};
             y            = {y.begin,
                             static_cast<short>(y.begin + currentShape.size() - 1)};
-
             break;
         }
         case Key::Z_KEY:
@@ -436,8 +447,6 @@ void update(double delta)
 
     while (gravityTimer >= currentInterval)
     {
-        // if (y.end >= baseline.y) break;
-
         y.begin++;
         y.end++;
         gravityTimer -= currentInterval;
@@ -471,12 +480,6 @@ void render()
                 if (currentShape[yAxis][xAxis] == "■") cell = "■";
             }
 
-            // this is just for debugging the baseline, it should be removed
-            // later
-
-            // for (const auto& coord : baseline)
-            //     if (coord.x == col && coord.y == row) cell = "x";
-
             std::cout << cell;
         }
 
@@ -489,6 +492,8 @@ void render()
 
 auto main(int argc, const char* argv[]) -> int
 {
+    logger.start("debug.log");
+
     std::cout.setf(std::ios::unitbuf);
 
     hideCursor();
@@ -496,6 +501,8 @@ auto main(int argc, const char* argv[]) -> int
     setNonBlocking();
 
     clear();
+
+    spawnNewPiece();
 
     while (running)
     {
@@ -515,6 +522,9 @@ auto main(int argc, const char* argv[]) -> int
     }
 
     restoreCursor();
+    disableRawMode();
+
+    logger.stop();
 
     return 0;
 }
