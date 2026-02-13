@@ -1,0 +1,5 @@
+-I./tetris/include
+-I/usr/local/include
+-std=c++20
+-xc++
+-Wall
