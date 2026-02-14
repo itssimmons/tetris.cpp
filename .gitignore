@@ -75,3 +75,4 @@ saves/
 scores/
 *.sav
 *.score
+_codeql_detected_source_root

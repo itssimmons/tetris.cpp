@@ -1,44 +1,64 @@
 #include <cstdint>
+#include <fstream>
+#include <sstream>
 #include <unordered_map>
 
 #include "core/rng.h"
 #include "game/board.h"
 #include "game/tetromino.h"
 
+static std::array<std::string, 7> loadBlocks()
+{
+    std::array<std::string, 7> result;
+    std::ifstream file("tetris/assets/textures/blocks");
+    if (!file.is_open()) return result;
+
+    std::string content((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+    std::stringstream ss(content);
+    std::string token;
+    for (size_t i = 0; i < 7 && std::getline(ss, token, ','); ++i)
+        result[i] = token;
+
+    return result;
+}
+
+const std::array<std::string, 7> blocks = loadBlocks();
+
 std::unordered_map<Shape, matrix_t> shapes{
     {Shape::L,
-     {{{" ", " ", "■", " "},
-       {"■", "■", "■", " "},
+     {{{" ", " ", blocks[L], " "},
+       {blocks[L], blocks[L], blocks[L], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::T,
-     {{{" ", "■", " ", " "},
-       {"■", "■", "■", " "},
+     {{{" ", blocks[T], " ", " "},
+       {blocks[T], blocks[T], blocks[T], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::J,
-     {{{"■", " ", " ", " "},
-       {"■", "■", "■", " "},
+     {{{blocks[J], " ", " ", " "},
+       {blocks[J], blocks[J], blocks[J], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::S,
-     {{{" ", "■", "■", " "},
-       {"■", "■", " ", " "},
+     {{{" ", blocks[S], blocks[S], " "},
+       {blocks[S], blocks[S], " ", " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::Z,
-     {{{"■", "■", " ", " "},
-       {" ", "■", "■", " "},
+     {{{blocks[Z], blocks[Z], " ", " "},
+       {" ", blocks[Z], blocks[Z], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::O,
-     {{{"■", "■", " ", " "},
-       {"■", "■", " ", " "},
+     {{{blocks[O], blocks[O], " ", " "},
+       {blocks[O], blocks[O], " ", " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::I,
      {{{" ", " ", " ", " "},
-       {"■", "■", "■", "■"},
+       {blocks[I], blocks[I], blocks[I], blocks[I]},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
 };
@@ -137,7 +157,7 @@ void Tetromino::rotate(const std::vector<Coords>& baseline, bool clockwise)
     {
         int row        = 1 - offsetY; // invert y-axis for correct rotation
         int col        = offsetX + 1; // shift x-axis to fit in 3x3 grid
-        grid[row][col] = "■";
+        grid[row][col] = blocks[shapeType];
     }
 
     matrix = grid;

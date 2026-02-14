@@ -5,6 +5,7 @@
 
 #include <core/coords.h>
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -22,6 +23,8 @@ enum Shape : std::uint8_t
     O,
     I
 };
+
+extern const std::array<std::string, 7> blocks;
 
 class Tetromino
 {
