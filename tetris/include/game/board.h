@@ -9,9 +9,6 @@
 #include <core/coords.h>
 #include <game/tetromino.h>
 
-constexpr std::uint16_t BOARD_WIDTH  = 10U;
-constexpr std::uint16_t BOARD_HEIGHT = 22U; // 20 + 2 (2 hidden rows)
-
 struct bounds_t
 {
     size_t LEFT;
@@ -30,7 +27,7 @@ class Board
     std::vector<Coords> baseline;
     std::vector<std::vector<std::string>> grid;
 
-    Board(std::uint16_t w = BOARD_WIDTH, std::uint16_t h = BOARD_HEIGHT);
+    Board(std::uint16_t w = 0, std::uint16_t h = 0);
 
     void clearLines();
     void lockPiece(Tetromino& piece);
