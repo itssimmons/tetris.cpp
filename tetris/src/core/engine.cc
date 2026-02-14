@@ -59,7 +59,6 @@ void Engine::update(double dt)
             return []()
             {
                 // release key
-                std::cout << "Key released" << std::endl;
                 piece.speed = 1.0f; // reset speed on key release
             };
         });
