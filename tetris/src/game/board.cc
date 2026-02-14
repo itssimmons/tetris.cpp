@@ -1,21 +1,27 @@
 #include <iostream>
 #include <string>
 
+#include "core/terminal.h"
 #include "game/board.h"
 #include "game/tetromino.h"
 
-Board::Board(std::uint16_t w, std::uint16_t h) : width(w), height(h)
+Board::Board(std::uint16_t w, std::uint16_t h)
 {
-    grid.resize(h);
-    for (int row = 0; row < h; ++row)
+    terminal::init();
+
+    width  = w > 0 ? w : terminal::WIDTH;
+    height = h > 0 ? h : terminal::HEIGHT;
+
+    grid.resize(height);
+    for (int row = 0; row < height; ++row)
     {
-        grid[row].resize(w);
-        for (int col = 0; col < w; ++col)
+        grid[row].resize(width);
+        for (int col = 0; col < width; ++col)
             grid[row][col] = " ";
     }
 
-    Board::bounds = {0, static_cast<std::uint16_t>(w - 1), 0,
-                     static_cast<std::uint16_t>(h - 1)};
+    Board::bounds = {0, static_cast<std::uint16_t>(width - 1), 0,
+                     static_cast<std::uint16_t>(height - 1)};
 }
 
 void Board::clearLines()
@@ -133,13 +139,9 @@ void Board::calculateBaseline(Tetromino& piece)
 
 void Board::render(Tetromino& piece)
 {
-    std::cout << "\n\n";
+    // std::cout << "\n\n";
     for (int row = 0; row < height; ++row)
     {
-        // left border
-        if (row >= 2) std::cout << "│";
-        else std::cout << " ";
-
         for (int col = 0; col < width; ++col)
         {
             std::string cell = grid[row][col];
@@ -154,10 +156,5 @@ void Board::render(Tetromino& piece)
 
             std::cout << cell;
         }
-
-        // right border
-        if (row >= 2) std::cout << "│\n";
-        else std::cout << "\n";
     }
-    std::cout << " —————————— " << '\n';
 }
