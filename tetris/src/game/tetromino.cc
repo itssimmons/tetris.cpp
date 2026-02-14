@@ -1,9 +1,29 @@
 #include <cstdint>
+#include <fstream>
+#include <sstream>
 #include <unordered_map>
 
 #include "core/rng.h"
 #include "game/board.h"
 #include "game/tetromino.h"
+
+static std::array<std::string, 7> loadBlocks()
+{
+    std::array<std::string, 7> blocks;
+    std::ifstream file("tetris/assets/textures/blocks");
+    if (!file.is_open()) return blocks;
+
+    std::string content((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+    std::stringstream ss(content);
+    std::string token;
+    for (size_t i = 0; i < 7 && std::getline(ss, token, ','); ++i)
+        blocks[i] = token;
+
+    return blocks;
+}
+
+const std::array<std::string, 7> coloredBlocks = loadBlocks();
 
 std::unordered_map<Shape, matrix_t> shapes{
     {Shape::L,

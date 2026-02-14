@@ -24,17 +24,8 @@ enum Shape : std::uint8_t
     I
 };
 
-// Colored blocks using ANSI escape codes, indexed by Shape enum
-// L=Orange, T=Pink, J=Purple/DarkBlue, S=Green, Z=Red, O=Yellow, I=Cyan
-inline const std::array<std::string, 7> coloredBlocks = {
-    "\x1b[38;5;208m■\x1b[0m", // L - Orange
-    "\x1b[35m■\x1b[0m",       // T - Pink
-    "\x1b[34m■\x1b[0m",       // J - Purple/Dark Blue
-    "\x1b[32m■\x1b[0m",       // S - Green
-    "\x1b[31m■\x1b[0m",       // Z - Red
-    "\x1b[33m■\x1b[0m",       // O - Yellow
-    "\x1b[36m■\x1b[0m",       // I - Cyan
-};
+// Colored blocks loaded from assets/textures/blocks, indexed by Shape enum
+extern const std::array<std::string, 7> coloredBlocks;
 
 class Tetromino
 {
