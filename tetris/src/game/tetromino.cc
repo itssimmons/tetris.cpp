@@ -7,38 +7,38 @@
 
 std::unordered_map<Shape, matrix_t> shapes{
     {Shape::L,
-     {{{" ", " ", "■", " "},
-       {"■", "■", "■", " "},
+     {{{" ", " ", coloredBlocks[L], " "},
+       {coloredBlocks[L], coloredBlocks[L], coloredBlocks[L], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::T,
-     {{{" ", "■", " ", " "},
-       {"■", "■", "■", " "},
+     {{{" ", coloredBlocks[T], " ", " "},
+       {coloredBlocks[T], coloredBlocks[T], coloredBlocks[T], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::J,
-     {{{"■", " ", " ", " "},
-       {"■", "■", "■", " "},
+     {{{coloredBlocks[J], " ", " ", " "},
+       {coloredBlocks[J], coloredBlocks[J], coloredBlocks[J], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::S,
-     {{{" ", "■", "■", " "},
-       {"■", "■", " ", " "},
+     {{{" ", coloredBlocks[S], coloredBlocks[S], " "},
+       {coloredBlocks[S], coloredBlocks[S], " ", " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::Z,
-     {{{"■", "■", " ", " "},
-       {" ", "■", "■", " "},
+     {{{coloredBlocks[Z], coloredBlocks[Z], " ", " "},
+       {" ", coloredBlocks[Z], coloredBlocks[Z], " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::O,
-     {{{"■", "■", " ", " "},
-       {"■", "■", " ", " "},
+     {{{coloredBlocks[O], coloredBlocks[O], " ", " "},
+       {coloredBlocks[O], coloredBlocks[O], " ", " "},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
     {Shape::I,
      {{{" ", " ", " ", " "},
-       {"■", "■", "■", "■"},
+       {coloredBlocks[I], coloredBlocks[I], coloredBlocks[I], coloredBlocks[I]},
        {" ", " ", " ", " "},
        {" ", " ", " ", " "}}}},
 };
@@ -137,7 +137,7 @@ void Tetromino::rotate(const std::vector<Coords>& baseline, bool clockwise)
     {
         int row        = 1 - offsetY; // invert y-axis for correct rotation
         int col        = offsetX + 1; // shift x-axis to fit in 3x3 grid
-        grid[row][col] = "■";
+        grid[row][col] = coloredBlocks[shapeType];
     }
 
     matrix = grid;

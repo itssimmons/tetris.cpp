@@ -58,8 +58,8 @@ void Board::lockPiece(Tetromino& piece)
         {
             for (auto col = piece.x.begin; col <= piece.x.end; ++col)
             {
-                if (piece.matrix[row - piece.y.begin][col - piece.x.begin] ==
-                    "■")
+                if (piece.matrix[row - piece.y.begin][col - piece.x.begin] !=
+                    " ")
                 {
                     if (coords.x == col && coords.y == row)
                     {
@@ -79,10 +79,11 @@ void Board::lockPiece(Tetromino& piece)
         {
             for (auto col = piece.x.begin; col <= piece.x.end; ++col)
             {
-                if (piece.matrix[row - piece.y.begin][col - piece.x.begin] ==
-                    "■")
+                if (piece.matrix[row - piece.y.begin][col - piece.x.begin] !=
+                    " ")
                 {
-                    grid[row][col] = "■";
+                    grid[row][col] =
+                        piece.matrix[row - piece.y.begin][col - piece.x.begin];
                 }
             }
         }
@@ -96,7 +97,7 @@ void Board::gameOver(bool& running)
 {
     for (std::uint16_t col = 0; col < Board::bounds.RIGHT; ++col)
     {
-        if (grid[0][col] == "■")
+        if (grid[0][col] != " ")
         {
             running = false;
             break;
@@ -113,7 +114,7 @@ void Board::calculateBaseline(Tetromino& piece)
     {
         for (auto col = piece.x.begin; col <= piece.x.end; ++col)
         {
-            if (piece.matrix[row - piece.y.begin][col - piece.x.begin] == "■")
+            if (piece.matrix[row - piece.y.begin][col - piece.x.begin] != " ")
             {
                 std::int16_t r = row + 1;
                 baseline.push_back({col, r});
@@ -149,7 +150,7 @@ void Board::render(Tetromino& piece)
             {
                 int y = row - piece.y.begin;
                 int x = col - piece.x.begin;
-                if (piece.matrix[y][x] == "■") cell = "■";
+                if (piece.matrix[y][x] != " ") cell = piece.matrix[y][x];
             }
 
             std::cout << cell;
