@@ -24,8 +24,7 @@ enum Shape : std::uint8_t
     I
 };
 
-// Colored blocks loaded from assets/textures/blocks, indexed by Shape enum
-extern const std::array<std::string, 7> coloredBlocks;
+extern const std::array<std::string, 7> blocks;
 
 class Tetromino
 {
