@@ -40,12 +40,15 @@ class Tetromino
 
     void spawn();
     void rotate(const std::vector<Coords>& baseline, bool clockwise = true);
-    void fallLoop(double& dt, double& gravityInterval, double& gravityTimer);
+    void fallLoop(double& dt, const std::vector<Coords>& baseline);
     void moveLeft(const std::vector<Coords>& baseline);
     void moveRight(const std::vector<Coords>& baseline);
     void hardDrop(const std::vector<Coords>& baseline);
     void softDrop();
-    void wallKick();
+    void wallKick(Axis& refX, Axis& refY);
+
+    Coords getLowerBound(const std::vector<Coords>& baseline);
+    Coords getUpperBound(const std::vector<Coords>& baseline);
 };
 
 #endif // TETROMINO_H

@@ -1,30 +1,23 @@
+#include <atomic>
+#include <condition_variable>
+#include <fstream>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+
 #include "core/debugger.h"
 
-void Debugger::start(const std::string& filename)
+namespace dbg
 {
-    running = true;
-    out.open(filename, std::ios::out | std::ios::trunc);
-    worker = std::thread(&Debugger::process, this);
-}
+std::ofstream out;
+std::thread worker;
+std::mutex mtx;
+std::condition_variable cv;
+std::queue<std::string> queue;
+std::atomic<bool> running{false};
 
-void Debugger::stop()
-{
-    running = false;
-    cv.notify_all();
-    if (worker.joinable()) worker.join();
-    out.close();
-}
-
-void Debugger::log(std::string msg)
-{
-    {
-        std::lock_guard<std::mutex> lock(mtx);
-        queue.push(std::move(msg));
-    }
-    cv.notify_one();
-}
-
-void Debugger::process()
+void process()
 {
     std::unique_lock<std::mutex> lock(mtx);
 
@@ -41,3 +34,28 @@ void Debugger::process()
         out.flush(); // batch flush
     }
 }
+
+void start(const std::string& filename)
+{
+    running = true;
+    out.open(filename, std::ios::out | std::ios::trunc);
+    worker = std::thread(&process);
+}
+
+void stop()
+{
+    running = false;
+    cv.notify_all();
+    if (worker.joinable()) worker.join();
+    out.close();
+}
+
+void log(std::string msg)
+{
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        queue.push(std::move(msg));
+    }
+    cv.notify_one();
+}
+} // namespace dbg

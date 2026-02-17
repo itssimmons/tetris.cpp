@@ -1,4 +1,3 @@
-
 #include <array>
 #include <unistd.h>
 
@@ -8,14 +7,22 @@
 void Keyboard::listen(std::function<std::function<void()>(ansi::Key)> callback)
 {
     ansi::Key currentKey = ansi::Key::NONE;
-    char input;
+    char input           = 0;
 
-    read(STDIN_FILENO, &input, 1);
+    const ssize_t n = read(STDIN_FILENO, &input, 1);
+
+    // Nothing available (EAGAIN) or EOF: treat as key release
+    if (n <= 0)
+    {
+        if (releaseCallback && holding) { releaseCallback(); }
+        holding = false;
+        return;
+    }
 
     // Check if this is an escape sequence (arrow keys, etc.)
     if (input == '\x1b')
     {
-        std::array<char, 2> seq;
+        std::array<char, 2> seq{};
         if (read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
         {
             if (read(STDIN_FILENO, &seq[1], 1) == 1)

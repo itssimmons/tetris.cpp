@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "core/debugger.h"
 #include "core/terminal.h"
 #include "game/board.h"
 #include "game/tetromino.h"
@@ -20,8 +21,8 @@ Board::Board(std::uint16_t w, std::uint16_t h)
             grid[row][col] = " ";
     }
 
-    Board::bounds = {0, static_cast<std::uint16_t>(width - 1), 0,
-                     static_cast<std::uint16_t>(height - 1)};
+    Board::bounds = {0, static_cast<std::int16_t>(width - 1), 0,
+                     static_cast<std::int16_t>(height - 1)};
 }
 
 void Board::clearLines()
@@ -140,7 +141,6 @@ void Board::calculateBaseline(Tetromino& piece)
 
 void Board::render(Tetromino& piece)
 {
-    // std::cout << "\n\n";
     for (int row = 0; row < height; ++row)
     {
         for (int col = 0; col < width; ++col)
@@ -153,6 +153,15 @@ void Board::render(Tetromino& piece)
                 int y = row - piece.y.begin;
                 int x = col - piece.x.begin;
                 if (piece.matrix[y][x] != " ") cell = piece.matrix[y][x];
+            }
+
+            for (const auto& coord : baseline)
+            {
+                if (coord.x == col && coord.y == row)
+                {
+                    cell = "x";
+                    break;
+                }
             }
 
             std::cout << cell;
