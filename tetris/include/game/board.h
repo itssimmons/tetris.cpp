@@ -11,10 +11,10 @@
 
 struct bounds_t
 {
-    size_t LEFT;
-    size_t RIGHT;
-    size_t TOP;
-    size_t BOTTOM;
+    std::int16_t LEFT;
+    std::int16_t RIGHT;
+    std::int16_t TOP;
+    std::int16_t BOTTOM;
 };
 
 class Board

@@ -1,8 +1,11 @@
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 
+#include "core/debugger.h"
 #include "core/rng.h"
 #include "game/board.h"
 #include "game/tetromino.h"
@@ -124,11 +127,13 @@ void Tetromino::spawn()
     rotationIndex = 0;
 }
 
-void Tetromino::fallLoop(double& dt, double& gravityInterval,
-                         double& gravityTimer)
+double gravityTimer    = 0.0;
+double gravityInterval = 0.6f;
+
+void Tetromino::fallLoop(double& dt, const std::vector<Coords>& baseline)
 {
-    double currentInterval  = gravityInterval / speed;
-    gravityTimer           += dt;
+    double currentInterval  = gravityInterval;
+    gravityTimer           += dt * speed;
 
     while (gravityTimer >= currentInterval)
     {
@@ -160,25 +165,27 @@ void Tetromino::rotate(const std::vector<Coords>& baseline, bool clockwise)
         grid[row][col] = blocks[shapeType];
     }
 
-    matrix = grid;
-    x = {x.begin, static_cast<std::int16_t>(x.begin + matrix[0].size() - 1)};
-    y = {y.begin, static_cast<std::int16_t>(y.begin + matrix.size() - 1)};
+    matrix    = grid;
+    Axis refX = {x.begin,
+                 static_cast<std::int16_t>(x.begin + matrix[0].size() - 1)};
+    Axis refY = {y.begin,
+                 static_cast<std::int16_t>(y.begin + matrix.size() - 1)};
 
-    wallKick();
+    wallKick(refX, refY);
 }
 
 void Tetromino::moveLeft(const std::vector<Coords>& baseline)
 {
-    if (baseline.empty() || baseline[0].x <= Board::bounds.LEFT) return;
+    Coords lowerBound = getLowerBound(baseline);
+    if (baseline.empty() || lowerBound.x <= Board::bounds.LEFT) return;
     x.begin--;
     x.end--;
 }
 
 void Tetromino::moveRight(const std::vector<Coords>& baseline)
 {
-    if (baseline.empty() ||
-        baseline[baseline.size() - 1].x >= Board::bounds.RIGHT)
-        return;
+    Coords upperBound = getUpperBound(baseline);
+    if (baseline.empty() || upperBound.x >= Board::bounds.RIGHT) return;
     x.begin++;
     x.end++;
 }
@@ -196,19 +203,50 @@ void Tetromino::hardDrop(const std::vector<Coords>& baseline)
 
 void Tetromino::softDrop()
 {
-    speed += 5.0f;
+    speed = 10.0f;
 }
 
-void Tetromino::wallKick()
+void Tetromino::wallKick(Axis& refX, Axis& refY)
 {
-    if (x.begin < 0)
+    if (refX.begin < Board::bounds.LEFT)
     {
-        x.begin++;
-        x.end++;
+        auto delta = static_cast<std::int16_t>(Board::bounds.LEFT - refX.begin);
+        refX.begin += delta;
+        refX.end   += delta;
     }
-    else if (x.end >= Board::bounds.RIGHT)
+    else if (refX.end > Board::bounds.RIGHT)
     {
-        x.begin--;
-        x.end--;
+        auto delta  = static_cast<std::int16_t>(refX.end - Board::bounds.RIGHT);
+        refX.begin -= delta;
+        refX.end   -= delta;
     }
+
+    x = refX;
+    y = refY;
+}
+
+Coords Tetromino::getLowerBound(const std::vector<Coords>& baseline)
+{
+    if (baseline.empty()) return {0, 0};
+
+    Coords lowerBound = {baseline[0].x, baseline[0].y};
+    for (size_t i = 1; i < baseline.size(); ++i)
+    {
+        if (lowerBound.x > baseline[i].x) lowerBound.x = baseline[i].x;
+        if (lowerBound.y > baseline[i].y) lowerBound.y = baseline[i].y;
+    }
+    return lowerBound;
+}
+
+Coords Tetromino::getUpperBound(const std::vector<Coords>& baseline)
+{
+    if (baseline.empty()) return {0, 0};
+
+    Coords upperBound = {baseline[0].x, baseline[0].y};
+    for (size_t i = 1; i < baseline.size(); ++i)
+    {
+        if (upperBound.x < baseline[i].x) upperBound.x = baseline[i].x;
+        if (upperBound.y < baseline[i].y) upperBound.y = baseline[i].y;
+    }
+    return upperBound;
 }

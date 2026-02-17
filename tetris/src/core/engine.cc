@@ -3,13 +3,11 @@
 #include <thread>
 
 #include "core/ansi.h"
+#include "core/debugger.h"
 #include "core/engine.h"
 #include "core/keyboard.h"
 #include "game/board.h"
 #include "game/tetromino.h"
-
-double gravityInterval = INITIAL_GRAVITY_INTERVAL;
-double gravityFactor   = INITIAL_GRAVITY_FACTOR;
 
 Tetromino piece;
 Board board;
@@ -59,12 +57,17 @@ void Engine::update(double dt)
             return []()
             {
                 // release key
+                dbg::log("Key released, resetting speed.");
                 piece.speed = 1.0f; // reset speed on key release
             };
         });
 
-    piece.fallLoop(dt, gravityInterval, gravityFactor);
+    // Compute baseline from current position
+    board.calculateBaseline(piece);
 
+    piece.fallLoop(dt, board.baseline);
+
+    // Recompute baseline after movement for locking
     board.calculateBaseline(piece);
     board.lockPiece(piece);
     board.clearLines();
@@ -74,6 +77,8 @@ void Engine::update(double dt)
 int Engine::run()
 {
     Engine engine;
+
+    dbg::start("debug.log");
 
     std::cout.setf(std::ios::unitbuf);
 
@@ -87,6 +92,8 @@ int Engine::run()
     engine.loop();
 
     ansi::restoreCursor();
+
+    dbg::stop();
 
     return 0;
 }
