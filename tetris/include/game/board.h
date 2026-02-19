@@ -32,8 +32,11 @@ class Board
     void clearLines();
     void lockPiece(Tetromino& piece);
     void gameOver(bool& running);
-    void calculateBaseline(Tetromino& piece);
     void render(Tetromino& piece);
+
+    void calculateBaseline(Tetromino& piece);
+    Coords getLowerBound();
+    Coords getUpperBound();
 };
 
 #endif // BOARD_H
