@@ -10,8 +10,7 @@
 #include <string>
 #include <vector>
 
-using matrix_trot = std::array<std::array<std::array<short, 2>, 4>, 4>;
-using matrix_t    = std::array<std::array<std::string, 4>, 4>;
+using matrix_t = std::array<std::array<std::string, 4>, 4>;
 
 enum Shape : std::uint8_t
 {
@@ -35,20 +34,25 @@ class Tetromino
     int rotationIndex;
     float speed;
     matrix_t matrix;
+    std::vector<Coords> baseline;
 
     Tetromino();
 
     void spawn();
-    void rotate(const std::vector<Coords>& baseline, bool clockwise = true);
-    void fallLoop(double& dt, const std::vector<Coords>& baseline);
-    void moveLeft(const std::vector<Coords>& baseline);
-    void moveRight(const std::vector<Coords>& baseline);
-    void hardDrop(const std::vector<Coords>& baseline);
+    void rotate(const std::vector<Coords>& boardBaseline,
+                bool clockwise = true);
+    void fallLoop(double& dt, const std::vector<Coords>& boardBaseline);
+    void moveLeft(std::vector<std::vector<std::string>> grid);
+    void moveRight(std::vector<std::vector<std::string>> grid);
+    void hardDrop(const std::vector<Coords>& boardBaseline);
     void softDrop();
     void wallKick(Axis& refX, Axis& refY);
 
-    Coords getLowerBound(const std::vector<Coords>& baseline);
-    Coords getUpperBound(const std::vector<Coords>& baseline);
+    /// The baseline of a tetromino isn't more than a set of coordinates
+    /// representing where are the 4 blocks of 4x4 matrix () in the board.
+    void calculateBaseline();
+    Coords getLowerBound();
+    Coords getUpperBound();
 };
 
 #endif // TETROMINO_H

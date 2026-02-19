@@ -44,8 +44,8 @@ void Engine::update(double dt)
     keyboard.listen(
         [&](ansi::Key key)
         {
-            if (key == ansi::Key::LEFT) piece.moveLeft(board.baseline);
-            else if (key == ansi::Key::RIGHT) piece.moveRight(board.baseline);
+            if (key == ansi::Key::LEFT) piece.moveLeft(board.grid);
+            else if (key == ansi::Key::RIGHT) piece.moveRight(board.grid);
             else if (key == ansi::Key::SPACEBAR) piece.hardDrop(board.baseline);
             else if (key == ansi::Key::DOWN) piece.softDrop();
             else if (key == ansi::Key::Z)
@@ -57,8 +57,7 @@ void Engine::update(double dt)
             return []()
             {
                 // release key
-                dbg::log("Key released, resetting speed.");
-                piece.speed = 1.0f; // reset speed on key release
+                // piece.speed = 1.0f; // reset speed on key release
             };
         });
 

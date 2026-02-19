@@ -114,22 +114,8 @@ void Board::gameOver(bool& running)
 
 void Board::calculateBaseline(Tetromino& piece)
 {
-    baseline.clear();
-
-    bool done = false;
-    for (auto row = piece.y.end; row >= piece.y.begin; --row)
-    {
-        for (auto col = piece.x.begin; col <= piece.x.end; ++col)
-        {
-            if (piece.matrix[row - piece.y.begin][col - piece.x.begin] != " ")
-            {
-                std::int16_t r = row + 1;
-                baseline.push_back({col, r});
-                if (col >= piece.x.end) done = true;
-            }
-        }
-        if (done) break;
-    }
+    piece.calculateBaseline();
+    baseline = piece.baseline;
 
     for (auto& coord : baseline)
     {
@@ -155,16 +141,44 @@ void Board::render(Tetromino& piece)
                 if (piece.matrix[y][x] != " ") cell = piece.matrix[y][x];
             }
 
-            for (const auto& coord : baseline)
-            {
-                if (coord.x == col && coord.y == row)
-                {
-                    cell = "x";
-                    break;
-                }
-            }
+            // for (const auto& coord : baseline)
+            // {
+            //     if (coord.x == col && coord.y == row)
+            //     {
+            //         cell = "x";
+            //         break;
+            //     }
+            // }
 
             std::cout << cell;
         }
+        // std::cout << "\n";
     }
+    std::cout << std::flush;
+}
+
+Coords Board::getLowerBound()
+{
+    if (baseline.empty()) return {0, 0};
+
+    Coords lowerBound = {baseline[0].x, baseline[0].y};
+    for (size_t i = 1; i < baseline.size(); ++i)
+    {
+        if (lowerBound.x > baseline[i].x) lowerBound.x = baseline[i].x;
+        if (lowerBound.y > baseline[i].y) lowerBound.y = baseline[i].y;
+    }
+    return lowerBound;
+}
+
+Coords Board::getUpperBound()
+{
+    if (baseline.empty()) return {0, 0};
+
+    Coords upperBound = {baseline[0].x, baseline[0].y};
+    for (size_t i = 1; i < baseline.size(); ++i)
+    {
+        if (upperBound.x < baseline[i].x) upperBound.x = baseline[i].x;
+        if (upperBound.y < baseline[i].y) upperBound.y = baseline[i].y;
+    }
+    return upperBound;
 }

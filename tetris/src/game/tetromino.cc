@@ -66,42 +66,43 @@ std::unordered_map<Shape, matrix_t> shapes{
        {" ", " ", " ", " "}}}},
 };
 
-const std::unordered_map<Shape, matrix_trot> rotations{
-    {Shape::L,
-     {{{{{-1, 0}, {0, 0}, {1, 0}, {1, 1}}},
-       {{{0, 1}, {0, 0}, {0, -1}, {1, -1}}},
-       {{{1, 0}, {0, 0}, {-1, 0}, {-1, -1}}},
-       {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}},
-    {Shape::T,
-     {{{{{-1, 0}, {0, 0}, {1, 0}, {0, 1}}},
-       {{{0, 1}, {0, 0}, {0, -1}, {1, 0}}},
-       {{{1, 0}, {0, 0}, {-1, 0}, {0, -1}}},
-       {{{0, -1}, {0, 0}, {0, 1}, {-1, 0}}}}}},
-    {Shape::J,
-     {{{{{-1, 0}, {0, 0}, {1, 0}, {-1, 1}}},
-       {{{0, 1}, {0, 0}, {0, -1}, {1, 1}}},
-       {{{1, 0}, {0, 0}, {-1, 0}, {1, -1}}},
-       {{{0, -1}, {0, 0}, {0, 1}, {-1, -1}}}}}},
-    {Shape::S,
-     {{{{{-1, 0}, {0, 0}, {0, 1}, {1, 1}}},
-       {{{0, 1}, {0, 0}, {1, 0}, {1, -1}}},
-       {{{1, 0}, {0, 0}, {0, -1}, {-1, -1}}},
-       {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}}}},
-    {Shape::Z,
-     {{{{{-1, 1}, {0, 1}, {0, 0}, {1, 0}}},
-       {{{1, 1}, {1, 0}, {0, 0}, {0, -1}}},
-       {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}},
-       {{{-1, -1}, {-1, 0}, {0, 0}, {0, 1}}}}}},
-    {Shape::O,
-     {{{{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
-       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
-       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
-       {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}}}}},
-    {Shape::I,
-     {{{{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
-       {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}},
-       {{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
-       {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}}}}}};
+const std::unordered_map<Shape,
+                         std::array<std::array<std::array<short, 2>, 4>, 4>>
+    rotations{{Shape::L,
+               {{{{{-1, 0}, {0, 0}, {1, 0}, {1, 1}}},
+                 {{{0, 1}, {0, 0}, {0, -1}, {1, -1}}},
+                 {{{1, 0}, {0, 0}, {-1, 0}, {-1, -1}}},
+                 {{{0, -1}, {0, 0}, {0, 1}, {-1, 1}}}}}},
+              {Shape::T,
+               {{{{{-1, 0}, {0, 0}, {1, 0}, {0, 1}}},
+                 {{{0, 1}, {0, 0}, {0, -1}, {1, 0}}},
+                 {{{1, 0}, {0, 0}, {-1, 0}, {0, -1}}},
+                 {{{0, -1}, {0, 0}, {0, 1}, {-1, 0}}}}}},
+              {Shape::J,
+               {{{{{-1, 0}, {0, 0}, {1, 0}, {-1, 1}}},
+                 {{{0, 1}, {0, 0}, {0, -1}, {1, 1}}},
+                 {{{1, 0}, {0, 0}, {-1, 0}, {1, -1}}},
+                 {{{0, -1}, {0, 0}, {0, 1}, {-1, -1}}}}}},
+              {Shape::S,
+               {{{{{-1, 0}, {0, 0}, {0, 1}, {1, 1}}},
+                 {{{0, 1}, {0, 0}, {1, 0}, {1, -1}}},
+                 {{{1, 0}, {0, 0}, {0, -1}, {-1, -1}}},
+                 {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}}}},
+              {Shape::Z,
+               {{{{{-1, 1}, {0, 1}, {0, 0}, {1, 0}}},
+                 {{{1, 1}, {1, 0}, {0, 0}, {0, -1}}},
+                 {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}},
+                 {{{-1, -1}, {-1, 0}, {0, 0}, {0, 1}}}}}},
+              {Shape::O,
+               {{{{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+                 {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+                 {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}},
+                 {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}}}}},
+              {Shape::I,
+               {{{{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
+                 {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}},
+                 {{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}},
+                 {{{0, 1}, {0, 0}, {0, -1}, {0, -2}}}}}}};
 
 Tetromino::Tetromino()
 {
@@ -130,20 +131,24 @@ void Tetromino::spawn()
 double gravityTimer    = 0.0;
 double gravityInterval = 0.6f;
 
-void Tetromino::fallLoop(double& dt, const std::vector<Coords>& baseline)
+void Tetromino::fallLoop(double& dt, const std::vector<Coords>& boardBaseline)
 {
     double currentInterval  = gravityInterval;
     gravityTimer           += dt * speed;
 
     while (gravityTimer >= currentInterval)
     {
-        y.begin++;
-        y.end++;
+        const auto lowerBound = getLowerBound();
+        if (lowerBound.y < Board::bounds.BOTTOM)
+        {
+            y.begin++;
+            y.end++;
+        }
         gravityTimer -= currentInterval;
     }
 }
 
-void Tetromino::rotate(const std::vector<Coords>& baseline, bool clockwise)
+void Tetromino::rotate(const std::vector<Coords>& boardBaseline, bool clockwise)
 {
     if (clockwise) rotationIndex = (rotationIndex + 1) % 4;
     else if (!clockwise) rotationIndex = (rotationIndex - 1 + 4) % 4;
@@ -174,26 +179,39 @@ void Tetromino::rotate(const std::vector<Coords>& baseline, bool clockwise)
     wallKick(refX, refY);
 }
 
-void Tetromino::moveLeft(const std::vector<Coords>& baseline)
+void Tetromino::moveLeft(std::vector<std::vector<std::string>> grid)
 {
-    Coords lowerBound = getLowerBound(baseline);
-    if (baseline.empty() || lowerBound.x <= Board::bounds.LEFT) return;
+    Coords lowerBound = getLowerBound();
+    if (lowerBound.x <= Board::bounds.LEFT) return;
+
+    // Check if any block of the piece would collide with locked pieces
+    for (auto row = y.begin; row <= y.end; ++row)
+        for (auto col = x.begin; col <= x.end; ++col)
+            if (matrix[row - y.begin][col - x.begin] != " ")
+                if (grid[row][col - 1] != " ") return;
+
     x.begin--;
     x.end--;
 }
 
-void Tetromino::moveRight(const std::vector<Coords>& baseline)
+void Tetromino::moveRight(std::vector<std::vector<std::string>> grid)
 {
-    Coords upperBound = getUpperBound(baseline);
-    if (baseline.empty() || upperBound.x >= Board::bounds.RIGHT) return;
+    Coords upperBound = getUpperBound();
+    if (upperBound.x >= Board::bounds.RIGHT) return;
+
+    for (auto row = y.begin; row <= y.end; ++row)
+        for (auto col = x.begin; col <= x.end; ++col)
+            if (matrix[row - y.begin][col - x.begin] != " ")
+                if (grid[row][col + 1] != " ") return;
+
     x.begin++;
     x.end++;
 }
 
-void Tetromino::hardDrop(const std::vector<Coords>& baseline)
+void Tetromino::hardDrop(const std::vector<Coords>& boardBaseline)
 {
-    std::int16_t highestY = baseline[0].y;
-    for (const auto& coord : baseline)
+    std::int16_t highestY = boardBaseline[0].y;
+    for (const auto& coord : boardBaseline)
     {
         if (coord.y < highestY) highestY = coord.y;
     }
@@ -225,7 +243,7 @@ void Tetromino::wallKick(Axis& refX, Axis& refY)
     y = refY;
 }
 
-Coords Tetromino::getLowerBound(const std::vector<Coords>& baseline)
+Coords Tetromino::getLowerBound()
 {
     if (baseline.empty()) return {0, 0};
 
@@ -238,7 +256,7 @@ Coords Tetromino::getLowerBound(const std::vector<Coords>& baseline)
     return lowerBound;
 }
 
-Coords Tetromino::getUpperBound(const std::vector<Coords>& baseline)
+Coords Tetromino::getUpperBound()
 {
     if (baseline.empty()) return {0, 0};
 
@@ -249,4 +267,27 @@ Coords Tetromino::getUpperBound(const std::vector<Coords>& baseline)
         if (upperBound.y < baseline[i].y) upperBound.y = baseline[i].y;
     }
     return upperBound;
+}
+
+void Tetromino::calculateBaseline()
+{
+    baseline.clear();
+
+    bool done = false;
+    for (auto row = y.end; row >= y.begin; --row)
+    {
+        for (auto col = x.begin; col <= x.end; ++col)
+        {
+            if (matrix[row - y.begin][col - x.begin] != " ")
+            {
+                baseline.push_back({col, row});
+                if (col >= x.end) done = true;
+            }
+        }
+        if (done) break;
+    }
+
+    for (const auto& coord : baseline)
+        dbg::log("Baseline coord: (" + std::to_string(coord.x) + ", " +
+                 std::to_string(coord.y) + ")");
 }
