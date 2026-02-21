@@ -119,9 +119,23 @@ void Board::calculateBaseline(Tetromino& piece)
 
     for (auto& coord : baseline)
     {
+        if (coord.x < 0 || coord.x >= width) continue;
+
         while (coord.y < height && grid[coord.y][coord.x] == " ")
             coord.y++;
         coord.y--; // step back to the last empty cell
+    }
+
+    for (const auto& coords : baseline)
+    {
+        dbg::log("Board baseline coord: (" + std::to_string(coords.x) + ", " +
+                 std::to_string(coords.y) + ")");
+    }
+
+    for (const auto& coords : piece.baseline)
+    {
+        dbg::log("Piece baseline coord: (" + std::to_string(coords.x) + ", " +
+                 std::to_string(coords.y) + ")");
     }
 }
 
@@ -141,20 +155,9 @@ void Board::render(Tetromino& piece)
                 if (piece.matrix[y][x] != " ") cell = piece.matrix[y][x];
             }
 
-            // for (const auto& coord : baseline)
-            // {
-            //     if (coord.x == col && coord.y == row)
-            //     {
-            //         cell = "x";
-            //         break;
-            //     }
-            // }
-
             std::cout << cell;
         }
-        // std::cout << "\n";
     }
-    std::cout << std::flush;
 }
 
 Coords Board::getLowerBound()

@@ -17,8 +17,6 @@ void restoreCursor();
 
 void homeCursor();
 
-extern termios orig_termios;
-
 void disableRawMode();
 
 void enableRawMode();

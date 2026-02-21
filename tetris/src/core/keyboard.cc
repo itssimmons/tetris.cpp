@@ -1,54 +1,87 @@
-#include <array>
+#include <errno.h>
 #include <unistd.h>
 
-#include "core/ansi.h"
+#include "core/debugger.h"
 #include "core/keyboard.h"
 
-void Keyboard::listen(std::function<std::function<void()>(ansi::Key)> callback)
+ansi::Key Keyboard::poll()
 {
-    ansi::Key currentKey = ansi::Key::NONE;
-    char input           = 0;
+    char ch;
+    ssize_t n = read(STDIN_FILENO, &ch, 1);
 
-    const ssize_t n = read(STDIN_FILENO, &input, 1);
+    dbg::log("Read char: " + std::to_string(ch) + " (n=" + std::to_string(n) +
+             ")");
 
-    // Nothing available (EAGAIN) or EOF: treat as key release
-    if (n <= 0)
+    if (n == -1)
     {
-        if (releaseCallback && holding) { releaseCallback(); }
-        holding = false;
-        return;
-    }
-
-    // Check if this is an escape sequence (arrow keys, etc.)
-    if (input == '\x1b')
-    {
-        std::array<char, 2> seq{};
-        if (read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-            if (read(STDIN_FILENO, &seq[1], 1) == 1)
+            // If we have a lone ESC sitting in the buffer and no more input,
+            // then it's actually an ESC keypress
+            if (buffer == "\x1b")
             {
-                currentKey = ansi::typeofKey[seq[1]];
+                buffer.clear();
+                return ansi::Key::ESC;
             }
+            return ansi::Key::NONE;
         }
-        else
-        {
-            // If no sequence follows, it's just the ESC key
-            currentKey = ansi::typeofKey[input];
-        }
-    }
-    else
-    {
-        currentKey = ansi::typeofKey[input];
+
+        return ansi::Key::NONE;
     }
 
-    if (currentKey != ansi::Key::NONE)
+    if (n == 0)
     {
-        holding         = true;
-        releaseCallback = callback(currentKey);
+        if (buffer == "\x1b")
+        {
+            buffer.clear();
+            return ansi::Key::ESC;
+        }
+        return ansi::Key::NONE;
     }
-    else
+
+    buffer += ch;
+
+    // Arrow keys
+    if (buffer == "\x1b[A")
     {
-        if (releaseCallback && holding) { releaseCallback(); }
-        holding = false;
+        buffer.clear();
+        return ansi::Key::UP;
     }
-};
+    if (buffer == "\x1b[B")
+    {
+        buffer.clear();
+        return ansi::Key::DOWN;
+    }
+    if (buffer == "\x1b[C")
+    {
+        buffer.clear();
+        return ansi::Key::RIGHT;
+    }
+    if (buffer == "\x1b[D")
+    {
+        buffer.clear();
+        return ansi::Key::LEFT;
+    }
+    if (buffer == " ") // Spacebar
+    {
+        buffer.clear();
+        return ansi::Key::SPACEBAR;
+    }
+    if (buffer == "z" || buffer == "Z") // Z key
+    {
+        buffer.clear();
+        return ansi::Key::Z;
+    }
+    if (buffer == "x" || buffer == "X") // X key
+    {
+        buffer.clear();
+        return ansi::Key::X;
+    }
+    // ESC partial sequence - wait for more characters
+    if (buffer == "\x1b" || buffer == "\x1b[") return ansi::Key::NONE;
+
+    // If buffer grows too long, reset
+    if (buffer.size() > 3) buffer.clear();
+
+    return ansi::Key::NONE;
+}

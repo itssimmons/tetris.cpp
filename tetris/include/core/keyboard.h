@@ -3,7 +3,7 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include <functional>
+#include <string>
 #include <unistd.h>
 
 #include "core/ansi.h"
@@ -11,11 +11,10 @@
 class Keyboard
 {
   public:
-    void listen(std::function<std::function<void()>(ansi::Key)> callback);
+    ansi::Key poll();
 
   private:
-    bool holding = false;
-    std::function<void()> releaseCallback;
+    std::string buffer;
 };
 
 #endif // KEYBOARD_H
