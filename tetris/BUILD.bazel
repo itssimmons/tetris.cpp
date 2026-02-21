@@ -1,0 +1,20 @@
+cc_library(
+	name = "mylib",
+	srcs = glob(["src/**/*.cc"], exclude = ["src/main.cc"], allow_empty=True),
+	hdrs = glob(["include/**/*.h"]),
+	includes = ["include"],
+	visibility = ["//visibility:public"],
+)
+
+filegroup(
+	name = "textures",
+	srcs = glob(["assets/textures/*"]),
+	visibility = ["//visibility:public"],
+)
+
+cc_binary(
+  name = "tetris",
+  srcs = ["src/main.cc"],
+  deps = [":mylib"],
+  data = [":textures"],
+)
