@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdint>
 
 #include "core/rng.h"
