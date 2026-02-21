@@ -1,0 +1,33 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    needs: build
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: tetris-artifact
+          path: ./artifact
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: "Automated release for tag ${{ github.ref_name }}"
+          artifacts: |
+            ./artifact/tetris
+            ./artifact/tetris.runfiles/
+          draft: false
+          prerelease: false
