@@ -107,7 +107,7 @@ const std::unordered_map<Shape,
 Tetromino::Tetromino()
 {
     rotationIndex = 0;
-    speed         = 1.0f;
+    speed         = 3.5f;
 }
 
 void Tetromino::spawn()
@@ -199,6 +199,7 @@ void Tetromino::moveRight(std::vector<std::vector<std::string>> grid)
     Coords upperBound = getUpperBound();
     if (upperBound.x >= Board::bounds.RIGHT) return;
 
+    // Check if any block of the piece would collide with locked pieces
     for (auto row = y.begin; row <= y.end; ++row)
         for (auto col = x.begin; col <= x.end; ++col)
             if (matrix[row - y.begin][col - x.begin] != " ")
@@ -221,7 +222,7 @@ void Tetromino::hardDrop(const std::vector<Coords>& boardBaseline)
 
 void Tetromino::softDrop()
 {
-    speed = 10.0f;
+    speed = 15.0f;
 }
 
 void Tetromino::wallKick(Axis& refX, Axis& refY)
@@ -286,8 +287,4 @@ void Tetromino::calculateBaseline()
         }
         if (done) break;
     }
-
-    for (const auto& coord : baseline)
-        dbg::log("Baseline coord: (" + std::to_string(coord.x) + ", " +
-                 std::to_string(coord.y) + ")");
 }

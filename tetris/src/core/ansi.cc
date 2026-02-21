@@ -8,9 +8,15 @@
 
 namespace ansi
 {
+static termios orig_termios;
+
 void clearScreen()
 {
-    std::cout << "\033[H\033[2J";
+    /// NOTE: Clearing the screen every frame was causing a lot of flickering.
+    /// Instead, we can just move the cursor to the home position and overwrite
+    /// the existing content.
+
+    // std::cout << "\033[H\033[2J";
 }
 
 void hideCursor()
@@ -28,8 +34,6 @@ void homeCursor()
     std::cout << "\033[H";
 }
 
-termios orig_termios;
-
 void disableRawMode()
 {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
@@ -42,16 +46,21 @@ void enableRawMode()
 
     termios raw = orig_termios;
 
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG); // local modes
-    raw.c_iflag &= ~(IXON | ICRNL);         // input modes
-    // raw.c_oflag &= ~(OPOST);             // output modes
+    raw.c_lflag     &= ~(ECHO | ICANON | ISIG);
+    raw.c_iflag     &= ~(IXON | ICRNL);
+    raw.c_cc[VMIN]   = 0;
+    raw.c_cc[VTIME]  = 0;
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
 void setNonBlocking()
 {
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+    /// NOTE: This was causing the midgame freezing, so I'm leaving it out for
+    /// now. It seems that enabling raw mode with VMIN=0 and VTIME=0 is
+    /// sufficient for non-blocking input.
+
+    // int flags = fcntl(STDIN_FILENO,
+    // F_GETFL, 0); fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 }
 } // namespace ansi
