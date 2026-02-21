@@ -58,14 +58,11 @@ export PATH="$(go env GOPATH)/bin:$PATH"
 
 ```bash
 # Build the tetris binary
-bazel build //tetris:tetris --verbose_failures
+bazel build //tetris:tetris
 
-# Run the game directly from the Bazel output
-$(bazel info bazel-bin)/tetris/tetris
+# Run the game
+bazel run //tetris:tetris
 ```
-
-The build will produce a self-contained binary alongside a `.runfiles/`
-directory that includes the block-texture asset required at runtime.
 
 ---
 
@@ -139,13 +136,13 @@ tetris.cpp/
 
 1. **Fork** the repository and create a feature branch from `main`:
    ```bash
-   git checkout -b feat/my-new-feature
+   git switch -c feat/my-new-feature
    ```
 2. **Make your changes** following the code style described above.
 3. **Format** all modified C++ files with `clang-format`.
 4. **Build** the project and verify the game runs correctly:
    ```bash
-   bazel build //tetris:tetris --verbose_failures
+   bazel build //tetris:tetris
    ```
 5. **Commit** with a descriptive message following
    [Conventional Commits](https://www.conventionalcommits.org/):
