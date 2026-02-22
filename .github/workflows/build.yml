@@ -31,7 +31,7 @@ jobs:
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install Bazelisk on UNIX/Linux
+      - name: Install Bazelisk
         if: matrix.platform != 'windows-latest'
         run: |
           go install github.com/bazelbuild/bazelisk@latest
@@ -51,9 +51,16 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build with Bazel
+        if: matrix.platform != 'windows-latest'
         run: |
           bazel build //tetris:tetris --verbose_failures
-          echo "binary_path=$(bazel info bazel-bin)/tetris/tetris" >> $GITHUB_ENV
+          echo "binary_path=$(bazel info bazel-bin)/tetris" >> $GITHUB_ENV
+      
+      - name: Build with Bazel on Windows
+        if: matrix.platform == 'windows-latest'
+        run: |
+          bazel build //tetris:tetris --verbose_failures
+          echo "binary_path=$(bazel info bazel-bin)\tetris" >> $GITHUB_ENV
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
