@@ -23,6 +23,14 @@ jobs:
         with:
           go-version: "1.26"
 
+      - name: Cache Go Modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
       - name: Install Bazelisk on UNIX/Linux
         if: matrix.platform != 'windows-latest'
         run: |
@@ -52,5 +60,4 @@ jobs:
         with:
           name: tetris-artifact-${{ matrix.platform }}
           path: |
-            ${{ env.binary_path }}
-            ${{ env.binary_path }}.runfiles/
+            ${{ env.binary_path }}*
