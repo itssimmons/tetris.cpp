@@ -1,3 +1,7 @@
 build --cxxopt=-std=c++20
 build --host_cxxopt=-std=c++20
 build --features=layering_check
+
+# Windows MSVC fallback
+build:windows --cxxopt=/std:c++20
+build:windows --host_cxxopt=/std:c++20
