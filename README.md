@@ -21,11 +21,11 @@ This is a simple implementation of the classic Tetris game using C++. The game i
 
 Visit the project’s [Releases](https://github.com/itssimmons/tetris.cpp/releases) page and download the binary that corresponds to your operating system. Once downloaded, execute the file from your terminal to begin the game.
 
-> ⚠️ **Terminal Compatibility**
-> Ensure that your terminal emulator supports ANSI escape sequences; otherwise, colors and screen rendering may not display correctly.
+> [!WARNING]
+> ⚠️ **Terminal Compatibility**: Ensure that your terminal emulator supports ANSI escape sequences; otherwise, colors and screen rendering may not display correctly.
 
-> 🔒 **Security Notice**
-> Precompiled binaries may be flagged by your operating system’s security mechanisms because they are unsigned.
+> [!IMPORTANT]
+> 🔒 **Security Notice**: Precompiled binaries may be flagged by your operating system’s security mechanisms because they are unsigned.
 >
 > * **Windows:** If a SmartScreen warning appears, select **“More info”** and then **“Run anyway.”**
 > * **MacOS:** You may need to remove the quarantine attribute:
