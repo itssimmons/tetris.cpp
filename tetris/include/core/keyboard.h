@@ -4,7 +4,6 @@
 #define KEYBOARD_H
 
 #include <string>
-#include <unistd.h>
 
 #include "core/ansi.h"
 

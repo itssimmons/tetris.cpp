@@ -143,6 +143,14 @@ void Board::render(Tetromino& piece)
 {
     for (int row = 0; row < height; ++row)
     {
+        // Explicitly position the cursor at the start of each row so
+        // rendering is correct regardless of whether the terminal width
+        // matches the board width (important on Windows/Mintty where the
+        // 2-display-column block cells would otherwise cause row drift).
+        #if defined(_WIN32) || defined(__MINGW64__)
+            std::cout << "\033[" << (row + 1) << ";1H";
+        #endif
+
         for (int col = 0; col < width; ++col)
         {
             std::string cell = grid[row][col];

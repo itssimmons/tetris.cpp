@@ -4,7 +4,6 @@
 #define ANSI_H
 
 #include <cstdint>
-#include <termios.h>
 #include <unordered_map>
 
 namespace ansi
