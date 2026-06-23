@@ -211,13 +211,27 @@ void Tetromino::moveRight(std::vector<std::vector<std::string>> grid)
 
 void Tetromino::hardDrop(const std::vector<Coords>& boardBaseline)
 {
+    if (boardBaseline.empty()) return;
+
     std::int16_t highestY = boardBaseline[0].y;
     for (const auto& coord : boardBaseline)
     {
         if (coord.y < highestY) highestY = coord.y;
     }
-    y.end   = highestY;
-    y.begin = static_cast<std::int16_t>(y.end - matrix.size() + 1);
+
+    std::int16_t occupiedBottom = 0;
+    for (std::int16_t row = 0; row < static_cast<std::int16_t>(matrix.size());
+         ++row)
+    {
+        for (std::int16_t col = 0;
+             col < static_cast<std::int16_t>(matrix[row].size()); ++col)
+        {
+            if (matrix[row][col] != " ") occupiedBottom = row;
+        }
+    }
+
+    y.begin = static_cast<std::int16_t>(highestY - occupiedBottom);
+    y.end   = static_cast<std::int16_t>(y.begin + matrix.size() - 1);
 }
 
 void Tetromino::softDrop()
@@ -274,17 +288,15 @@ void Tetromino::calculateBaseline()
 {
     baseline.clear();
 
-    bool done = false;
-    for (auto row = y.end; row >= y.begin; --row)
+    for (auto col = x.begin; col <= x.end; ++col)
     {
-        for (auto col = x.begin; col <= x.end; ++col)
+        for (auto row = y.end; row >= y.begin; --row)
         {
             if (matrix[row - y.begin][col - x.begin] != " ")
             {
                 baseline.push_back({col, row});
-                if (col >= x.end) done = true;
+                break;
             }
         }
-        if (done) break;
     }
 }
