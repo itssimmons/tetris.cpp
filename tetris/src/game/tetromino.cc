@@ -211,13 +211,25 @@ void Tetromino::moveRight(std::vector<std::vector<std::string>> grid)
 
 void Tetromino::hardDrop(const std::vector<Coords>& boardBaseline)
 {
+    // Trim empty rows at bottom of the 4x4 bounding box
+    std::int16_t pieceBottom = y.begin;
+    for (auto row = y.begin; row <= y.end; ++row) {
+        for (auto col = x.begin; col <= x.end; ++col) {
+            if (matrix[row - y.begin][col - x.begin] != " ") {
+                pieceBottom = row;
+                break;
+            }
+        }
+    }
+    std::int16_t pieceHeight = pieceBottom - y.begin + 1;
+
     std::int16_t highestY = boardBaseline[0].y;
     for (const auto& coord : boardBaseline)
     {
         if (coord.y < highestY) highestY = coord.y;
     }
     y.end   = highestY;
-    y.begin = static_cast<std::int16_t>(y.end - matrix.size() + 1);
+    y.begin = static_cast<std::int16_t>(y.end - pieceHeight + 1);
 }
 
 void Tetromino::softDrop()
